@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BarangController;
 use App\Http\Controllers\JenisBarangController;
 use App\Http\Controllers\SumberBarangController;
+use App\Http\Controllers\PeminjamanController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -50,6 +51,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'index', 'store', 'update', 'destroy'
     ]);
 
+    // Halaman utama (daftar peminjaman)
+    Route::get('/peminjaman', [PeminjamanController::class, 'index'])->name('peminjaman.index');
+    // Halaman form tambah peminjaman
+    Route::get('/peminjaman/create', [PeminjamanController::class, 'create'])->name('peminjaman.create');
+    // Aksi menyimpan peminjaman baru
+    Route::post('/peminjaman', [PeminjamanController::class, 'store'])->name('peminjaman.store');
+    // Aksi kustom untuk mengembalikan barang
+    // Kita gunakan POST (bukan GET seperti di file lama) karena ini mengubah data
+    Route::post('/peminjaman/{peminjaman}/kembali', [PeminjamanController::class, 'kembali'])->name('peminjaman.kembali');
 
 });
 
