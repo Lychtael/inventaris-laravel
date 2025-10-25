@@ -4,6 +4,8 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BarangController;
+use App\Http\Controllers\JenisBarangController;
+use App\Http\Controllers\SumberBarangController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -33,6 +35,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/barang/import-csv', [BarangController::class, 'importCsv'])->name('barang.importCsv');
     // Rute resource untuk operasi CRUD standar
     Route::resource('barang', BarangController::class);
+
+    // Rute kustom untuk AJAX 'getUbah' 
+    Route::post('/jenisbarang/getubah', [JenisBarangController::class, 'getUbah'])->name('jenisbarang.getubah');
+    // Hanya gunakan rute resource yang kita perlukan
+    Route::resource('jenisbarang', JenisBarangController::class)->only([
+        'index', 'store', 'update', 'destroy'
+    ]);
+
+    // Rute kustom untuk AJAX 'getUbah' 
+    Route::post('/sumberbarang/getubah', [SumberBarangController::class, 'getUbah'])->name('sumberbarang.getubah');
+    // Hanya gunakan rute resource yang kita perlukan
+    Route::resource('sumberbarang', SumberBarangController::class)->only([
+        'index', 'store', 'update', 'destroy'
+    ]);
 
 
 });
