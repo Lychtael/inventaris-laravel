@@ -5,6 +5,11 @@
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
+        <div class="mb-4">
+            <a href="/">
+                <img src="{{ asset('img/Logo-Diskominfo.png') }}" alt="Logo Diskominfo" class="img-fluid" style="max-width:120px;">
+            </a>
+        </div>
         <!-- Email Address -->
         <div>
             <x-input-label for="email" :value="__('Email')" />

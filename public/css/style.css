@@ -1,0 +1,26 @@
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('/img/Logo-Diskominfo.png'); /* Sesuaikan nama logo */
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: 40%; /* Ukuran yang Anda suka */
+    opacity: 0.3; /* Tingkat transparansi, sesuaikan jika perlu */
+    z-index: -1; /* Ini kuncinya: meletakkan watermark di belakang */
+}
+.navbar-brand-main {
+    display: block;
+    font-size: 1.1rem; /* Ukuran font untuk baris atas */
+    font-weight: bold;
+    line-height: 1; /* Mengatur jarak antar baris */
+}
+
+.navbar-brand-sub {
+    display: block;
+    font-size: 0.8rem; /* Ukuran font untuk baris bawah */
+    line-height: 1;
+}

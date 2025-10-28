@@ -4,9 +4,14 @@
         <div class="flex justify-between h-16">
             <div class="flex">
                 <!-- Logo -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
+                <div class="flex-shrink-0 flex items-center">
+                    <a class="navbar-brand d-flex align-items-center" href="{{ route('dashboard') }}">
+                        <img src="{{ asset('img/Logo-Diskominfo.png') }}" alt="Logo Diskominfo" style="height: 40px;" class="me-3">
+                        
+                        <div>
+                            <span class="navbar-brand-main">Sistem Inventaris</span>
+                            <span class="navbar-brand-sub">Diskominfo</span>
+                        </div>
                     </a>
                 </div>
 
