@@ -7,6 +7,7 @@ use App\Http\Controllers\BarangController;
 use App\Http\Controllers\JenisBarangController;
 use App\Http\Controllers\SumberBarangController;
 use App\Http\Controllers\PeminjamanController;
+use App\Http\Controllers\LogController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -61,6 +62,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Kita gunakan POST (bukan GET seperti di file lama) karena ini mengubah data
     Route::post('/peminjaman/{peminjaman}/kembali', [PeminjamanController::class, 'kembali'])->name('peminjaman.kembali');
 
+    // == MODUL LOG AKTIVITAS ==
+    // Menggantikan LogController.php (hanya perlu 'index')
+    Route::get('/log', [LogController::class, 'index'])->name('log.index');
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])

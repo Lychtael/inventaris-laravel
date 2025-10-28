@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\SumberBarang;
 use Illuminate\Http\Request;
-// use App\Models\LogAktivitas; // (Opsional)
-// use Illuminate\Support\Facades\Auth; // (Opsional)
+use App\Models\LogAktivitas;
+use Illuminate\Support\Facades\Auth;
 
 class SumberBarangController extends Controller
 {
@@ -21,7 +21,6 @@ class SumberBarangController extends Controller
 
     /**
      * Menyimpan sumber barang baru.
-     * Diterjemahkan dari: SumberBarangController.php -> tambah()
      */
     public function store(Request $request)
     {
@@ -31,8 +30,13 @@ class SumberBarangController extends Controller
 
         SumberBarang::create($validated);
         
-        // TODO: Logging
-        // LogAktivitas::create([... 'keterangan' => 'Menambah sumber baru: ...']);
+        // -- LOGGING --
+        LogAktivitas::create([
+            'id_pengguna' => Auth::id(),
+            'aksi' => 'TAMBAH',
+            'tabel' => 'sumber_barang',
+            'keterangan' => 'Menambah sumber baru: ' . $validated['nama_sumber']
+        ]);
 
         return redirect()->route('sumberbarang.index')
                          ->with('success', 'Sumber Barang berhasil ditambahkan.');
@@ -40,7 +44,6 @@ class SumberBarangController extends Controller
 
     /**
      * Mengambil data untuk modal edit (AJAX).
-     * Diterjemahkan dari: SumberBarangController.php -> getUbah()
      */
     public function getUbah(Request $request)
     {
@@ -53,19 +56,22 @@ class SumberBarangController extends Controller
 
     /**
      * Memperbarui sumber barang.
-     * Diterjemahkan dari: SumberBarangController.php -> ubah()
      */
     public function update(Request $request, SumberBarang $sumberBarang)
     {
-        // $sumberBarang sudah di-fetch otomatis
         $validated = $request->validate([
             'nama_sumber' => 'required|string|max:100|unique:sumber_barang,nama_sumber,' . $sumberBarang->id
         ]);
 
         $sumberBarang->update($validated);
 
-        // TODO: Logging
-        // LogAktivitas::create([... 'aksi' => 'UBAH' ...]);
+        // -- LOGGING --
+        LogAktivitas::create([
+            'id_pengguna' => Auth::id(),
+            'aksi' => 'UBAH',
+            'tabel' => 'sumber_barang',
+            'keterangan' => 'Mengubah sumber barang: ' . $validated['nama_sumber']
+        ]);
 
         return redirect()->route('sumberbarang.index')
                          ->with('success', 'Sumber Barang berhasil diubah.');
@@ -73,15 +79,20 @@ class SumberBarangController extends Controller
 
     /**
      * Menghapus sumber barang.
-     * Diterjemahkan dari: SumberBarangController.php -> hapus()
      */
     public function destroy(SumberBarang $sumberBarang)
     {
+        $namaSumber = $sumberBarang->nama_sumber; // Simpan nama untuk log
         try {
             $sumberBarang->delete();
             
-            // TODO: Logging
-            // LogAktivitas::create([... 'aksi' => 'HAPUS' ...]);
+            // -- LOGGING --
+            LogAktivitas::create([
+                'id_pengguna' => Auth::id(),
+                'aksi' => 'HAPUS',
+                'tabel' => 'sumber_barang',
+                'keterangan' => 'Menghapus sumber barang: ' . $namaSumber
+            ]);
 
             return redirect()->route('sumberbarang.index')
                              ->with('success', 'Sumber Barang berhasil dihapus.');
