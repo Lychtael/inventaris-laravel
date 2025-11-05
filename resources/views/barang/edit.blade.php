@@ -77,6 +77,17 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+                        <div class="form-group">
+                            <label for="id_kondisi">Kondisi Barang</label>
+                            <select class="form-control" id="id_kondisi" name="id_kondisi" required>
+                                <option value="">-- Pilih Kondisi --</option>
+                                @foreach ($kondisi as $k)
+                                    <option value="{{ $k->id }}" @selected($barang->id_kondisi == $k->id)>
+                                        {{ $k->nama_kondisi }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                         <div class="mb-3">
                             <label for="keterangan" class="form-label">Keterangan</label>
                             <textarea class="form-control @error('keterangan') is-invalid @enderror" id="keterangan" name="keterangan" rows="3">{{ old('keterangan', $barang->keterangan) }}</textarea>

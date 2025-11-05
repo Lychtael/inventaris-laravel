@@ -13,7 +13,7 @@
                     <h3>{{ $judul ?? 'Daftar Barang' }}</h3>
                     <hr class="my-3">
 
-                   
+                    
                     @if (session('success'))
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
                             {{ session('success') }}
@@ -33,7 +33,7 @@
                         <a href="{{ route('barang.importCsvForm') }}" class="btn btn-success me-2">Import dari CSV</a>
                     </div>
 
-                   
+                    
                     <div class="card mb-3">
                         <div class="card-body">
                             <div class="row align-items-end">
@@ -57,6 +57,19 @@
                                                 @foreach($sumber_list as $sumber)
                                                     <option value="{{ $sumber->id }}" {{ ($current_filters['sumber'] ?? '') == $sumber->id ? 'selected' : '' }}>
                                                         {{ $sumber->nama_sumber }}
+                                                    </ok>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="flex-grow-1 me-2">
+                                            <label class="form-label">&nbsp;</label>
+                                            <select name="kondisi" class="form-select">
+                                                <option value="">Semua Kondisi</option>
+                                                {{-- Asumsi $kondisi_list dikirim dari controller --}}
+                                                @foreach($kondisi_list ?? [] as $kondisi)
+                                                    <option value="{{ $kondisi->id }}" {{ ($current_filters['kondisi'] ?? '') == $kondisi->id ? 'selected' : '' }}>
+                                                        {{ $kondisi->nama_kondisi }}
                                                     </option>
                                                 @endforeach
                                             </select>
@@ -85,6 +98,7 @@
                                     <th>Nama Barang</th>
                                     <th>Jumlah</th>
                                     <th>Satuan</th>
+                                    <th>Kondisi</th>
                                     <th>Jenis Barang</th>
                                     <th>Sumber Barang</th>
                                     <th>Keterangan</th>
@@ -106,7 +120,7 @@
         </div>
     </div>
 
-   
+    
     @if (session('csv_import_errors'))
         <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
             <div class="modal-dialog">

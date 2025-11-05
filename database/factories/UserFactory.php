@@ -29,9 +29,9 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'id_peran' => 1, // <-- TAMBAHKAN INI (default ke Admin)
         ];
     }
-
     /**
      * Indicate that the model's email address should be unverified.
      */

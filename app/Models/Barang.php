@@ -10,7 +10,7 @@ class Barang extends Model
     protected $table = 'barang'; 
     const CREATED_AT = 'dibuat_pada';
     const UPDATED_AT = null;
-    public $timestamps = false; 
+    public $timestamps = false; // Ini harusnya 'true' jika Anda pakai 'dibuat_pada'
 
     // Kolom yang boleh diisi massal
     protected $fillable = [
@@ -19,10 +19,11 @@ class Barang extends Model
         'satuan', 
         'id_jenis', 
         'id_sumber', 
-        'keterangan'
+        'keterangan',
+        'id_kondisi' // <-- TAMBAHKAN INI
     ];
 
-    // Relasi ke JenisBarang (menggantikan JOIN manual)
+    // Relasi ke JenisBarang
     public function jenis() {
         return $this->belongsTo(JenisBarang::class, 'id_jenis');
     }
@@ -30,5 +31,13 @@ class Barang extends Model
     // Relasi ke SumberBarang
     public function sumber() {
         return $this->belongsTo(SumberBarang::class, 'id_sumber');
+    }
+    
+    // ++ TAMBAHKAN RELASI BARU INI ++
+    /**
+     * Relasi ke Kondisi
+     */
+    public function kondisi() {
+        return $this->belongsTo(Kondisi::class, 'id_kondisi');
     }
 }

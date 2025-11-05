@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\LogAktivitas;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Kondisi;
 
 class PeminjamanController extends Controller
 {
@@ -33,12 +34,21 @@ class PeminjamanController extends Controller
      */
     public function create()
     {
-        $barang = Barang::where('jumlah', '>', 0)
-                        ->orderBy('nama_barang', 'asc')
-                        ->get();
-        
+        // 1. Cari ID untuk kondisi "Baik"
+        $kondisi_baik = Kondisi::where('nama_kondisi', 'Baik')->first();
+        $barang_list = []; // Default daftar barang kosong
+    
+        // 2. Hanya jika kondisi "Baik" ada di database...
+        if ($kondisi_baik) {
+            // 3. Ambil barang yang "Baik" dan stoknya > 0
+            $barang_list = Barang::where('jumlah', '>', 0)
+                            ->where('id_kondisi', $kondisi_baik->id)
+                            ->orderBy('nama_barang', 'asc')
+                            ->get();
+        }
+    
         return view('peminjaman.create', [
-            'barang' => $barang,
+            'barang' => $barang_list, // Kirim daftar barang yang sudah difilter
             'judul' => 'Catat Peminjaman'
         ]);
     }

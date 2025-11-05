@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Models\LogAktivitas;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Kondisi;
 
 class BarangController extends Controller
 {
@@ -21,19 +22,20 @@ class BarangController extends Controller
     public function index(Request $request)
     {
         $limit = $request->get('limit', 25);
-        $query = Barang::with(['jenis', 'sumber']);
-
+        // Tambahkan 'kondisi' di sini
+        $query = Barang::with(['jenis', 'sumber', 'kondisi']); 
+    
         if ($request->filled('jenis')) {
             $query->where('id_jenis', $request->jenis);
         }
         if ($request->filled('sumber')) {
             $query->where('id_sumber', $request->sumber);
         }
-        
+    
         $barang = $query->orderBy('id', 'desc')->paginate($limit)->withQueryString();
         $jenis_list = JenisBarang::orderBy('nama_jenis', 'asc')->get();
         $sumber_list = SumberBarang::orderBy('nama_sumber', 'asc')->get();
-
+    
         return view('barang.index', [
             'barang' => $barang,
             'jenis_list' => $jenis_list,
@@ -50,10 +52,12 @@ class BarangController extends Controller
     {
         $jenis = JenisBarang::orderBy('nama_jenis', 'asc')->get();
         $sumber = SumberBarang::orderBy('nama_sumber', 'asc')->get();
-        
+        $kondisi = Kondisi::orderBy('nama_kondisi', 'asc')->get(); // <-- TAMBAHKAN INI
+    
         return view('barang.create', [
             'jenis' => $jenis,
             'sumber' => $sumber,
+            'kondisi' => $kondisi, // <-- TAMBAHKAN INI
             'judul' => 'Tambah Barang'
         ]);
     }
@@ -69,6 +73,7 @@ class BarangController extends Controller
             'satuan' => 'required|string|max:20',
             'id_jenis' => 'required|exists:jenis_barang,id',
             'id_sumber' => 'required|exists:sumber_barang,id',
+            'id_kondisi' => 'required|exists:kondisi,id', // <-- TAMBAHKAN INI
             'keterangan' => 'nullable|string',
         ]);
 
@@ -105,11 +110,13 @@ class BarangController extends Controller
     {
         $jenis = JenisBarang::orderBy('nama_jenis', 'asc')->get();
         $sumber = SumberBarang::orderBy('nama_sumber', 'asc')->get();
-        
+        $kondisi = Kondisi::orderBy('nama_kondisi', 'asc')->get(); // <-- TAMBAHKAN INI
+    
         return view('barang.edit', [
             'barang' => $barang,
             'jenis' => $jenis,
             'sumber' => $sumber,
+            'kondisi' => $kondisi, // <-- TAMBAHKAN INI
             'judul' => 'Edit Barang'
         ]);
     }
@@ -125,6 +132,7 @@ class BarangController extends Controller
             'satuan' => 'required|string|max:20',
             'id_jenis' => 'required|exists:jenis_barang,id',
             'id_sumber' => 'required|exists:sumber_barang,id',
+            'id_kondisi' => 'required|exists:kondisi,id', // <-- TAMBAHKAN INI
             'keterangan' => 'nullable|string',
         ]);
 
