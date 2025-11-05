@@ -1,61 +1,128 @@
-<x-app-layout> <x-slot name="header">
-    <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-        {{ __('Dashboard') }}
-    </h2>
-</x-slot>
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Dashboard') }}
+        </h2>
+    </x-slot>
 
-<div class="py-12">
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-            <div class="p-6 text-gray-900">
-
-                <div class="container mt-4">
-                    <h3>Dashboard Inventaris</h3>
-                    <hr>
-
-                    @if (session('status'))
-                        <div class="alert alert-success">
-                            {{ session('status') }}
-                        </div>
-                    @endif
-
-                    <div class="row">
-                        <div class="col-md-6 mb-4">
-                            <div class="card text-white bg-success shadow">
-                                <div class="card-body">
-                                    <h5 class="card-title">Total Jenis Barang</h5>
-                                    <p class="card-text fs-4 fw-bold">{{ $total_barang }} Jenis</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-4">
-                            <div class="card text-white bg-danger shadow">
-                                <div class="card-body">
-                                    <h5 class="card-title">Barang Habis (Stok 0)</h5>
-                                    <p class="card-text fs-4 fw-bold">{{ $barang_habis }} Jenis</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <ul class="list-group">
-                            @forelse($barang_by_jenis as $jenis)
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    {{ $jenis->nama_jenis }}
-                                    <span class="badge bg-primary rounded-pill">{{ $jenis->jumlah }}</span>
-                                </li>
-                            @empty
-                                <li class="list-group-item">Data jenis tidak ditemukan.</li>
-                            @endforelse
-                            </ul>
-                        </div>
-                        </div>
+    {{-- Pesan Notifikasi (untuk hak akses, dll) --}}
+    @if (session('error'))
+        <div class="py-6">
+            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div class="bg-red-500 text-white font-bold p-4 rounded shadow-md">
+                    {{ session('error') }}
                 </div>
-
             </div>
         </div>
+    @endif
+    
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            
+            <div class="row mb-4">
+                {{-- Total Barang Baik --}}
+                <div class="col-md-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title text-success">Total Barang (Kondisi Baik)</h5>
+                            <p class="card-text fs-3 fw-bold">{{ $totalBarangBaik ?? 0 }}</p>
+                            <small class="text-muted">Jumlah barang yang siap dipinjam</small>
+                        </div>
+                    </div>
+                </div>
+                {{-- Total Dipinjam --}}
+                <div class="col-md-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">Total Barang Dipinjam</h5>
+                            <p class="card-text fs-3 fw-bold">{{ $totalDipinjam ?? 0 }}</p>
+                            <small class="text-muted">Barang yang sedang tidak ada di stok</small>
+                        </div>
+                    </div>
+                </div>
+                {{-- Total Rusak --}}
+                <div class="col-md-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title text-danger">Total Barang Rusak</h5>
+                            <p class="card-text fs-3 fw-bold">{{ $totalRusak ?? 0 }}</p>
+                            <small class="text-muted">Rusak Ringan + Rusak Berat</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                {{-- Grafik Pie Chart --}}
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Grafik Kondisi Barang</h5>
+                            <canvas id="kondisiChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Log Aktivitas Terbaru --}}
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Log Aktivitas Terbaru</h5>
+                            <ul class="list-group list-group-flush">
+                                @forelse ($logAktivitas as $log)
+                                    <li class="list-group-item">
+                                        <strong>{{ $log->pengguna->name ?? 'Sistem' }}</strong> 
+                                        {{ $log->keterangan }}
+                                        <small class="text-muted d-block">{{ $log->dibuat_pada->diffForHumans() }}</small>
+                                    </li>
+                                @empty
+                                    <li class="list-group-item">Belum ada aktivitas.</li>
+                                @endforelse
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
     </div>
-</div>
+
+    {{-- PUSH SCRIPT UNTUK CHART.JS --}}
+    @push('scripts')
+        {{-- 1. Import Library Chart.js dari CDN --}}
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        {{-- 2. Script untuk membuat grafik --}}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const ctx = document.getElementById('kondisiChart');
+
+                new Chart(ctx, {
+                    type: 'pie', // Tipe grafik
+                    data: {
+                        labels: @json($chartLabels), // Label dari Controller
+                        datasets: [{
+                            label: 'Jumlah Barang',
+                            data: @json($chartData), // Data dari Controller
+                            backgroundColor: [
+                                'rgb(22, 163, 74)',  // Hijau (Baik)
+                                'rgb(249, 115, 22)', // Oranye (Rusak Ringan)
+                                'rgb(220, 38, 38)'   // Merah (Rusak Berat)
+                            ],
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        }
+                    }
+                });
+            });
+        </script>
+    @endpush
+
 </x-app-layout>
