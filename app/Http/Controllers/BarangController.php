@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessCsvImport;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Barang;
 use App\Models\JenisBarang;
 use App\Models\SumberBarang;
@@ -195,86 +197,20 @@ class BarangController extends Controller
     public function importCsv(Request $request)
     {
         $request->validate(['csv_file' => 'required|file|mimes:csv,txt']);
-        $file = $request->file('csv_file');
-        
-        $headerMap = [
-            'nama barang' => 'nama_barang', 'nama_barang' => 'nama_barang', 'nama' => 'nama_barang',
-            'qty' => 'qty', 'kuantitas' => 'qty', 'jumlah' => 'qty',
-            'satuan' => 'satuan', 'jenis' => 'jenis', 'kategori' => 'jenis',
-            'sumber' => 'sumber', 'asal' => 'sumber',
-            'keterangan' => 'keterangan', 'ket' => 'keterangan'
-        ];
 
-        $handle = fopen($file->getPathname(), "r");
-        if ($handle === false) {
-            return redirect()->back()->with('error', 'Tidak bisa membaca file CSV.');
-        }
+        // 1. Simpan file ke storage (misal: storage/app/imports)
+        // Kita simpan path filenya
+        $path = $request->file('csv_file')->store('imports');
 
-        $headers_raw = fgetcsv($handle, 1000, ",");
-        if (!$headers_raw) {
-             fclose($handle);
-            return redirect()->back()->with('error', 'File CSV kosong atau header tidak valid.');
-        }
-        
-        $headers = [];
-        foreach ($headers_raw as $h) {
-            $key = strtolower(trim($h));
-            $headers[] = $headerMap[$key] ?? $key;
-        }
+        // 2. Dapatkan user yang sedang login
+        $user = Auth::user();
 
-        $errors = []; $rowNumber = 1;
+        // 3. "Lempar" tugas ini ke background job
+        ProcessCsvImport::dispatch($path, $user);
 
-        DB::beginTransaction();
-        try {
-            while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
-                $rowNumber++;
-                if (count($row) != count($headers)) {
-                    $errors[] = "Baris #{$rowNumber}: Jumlah kolom tidak sesuai."; continue;
-                }
-                $data = array_combine($headers, $row);
-
-                $nama_barang = $data['nama_barang'] ?? null;
-                $jumlah = $data['qty'] ?? 0;
-                $satuan = $data['satuan'] ?? null;
-                $nama_jenis = $data['jenis'] ?? null;
-                $nama_sumber = $data['sumber'] ?? null;
-                $keterangan = $data['keterangan'] ?? null;
-                
-                if (empty($nama_barang) || empty($satuan) || empty($nama_jenis) || empty($nama_sumber)) {
-                     $errors[] = "Baris #{$rowNumber}: Data (nama_barang, satuan, jenis, sumber) tidak boleh kosong."; continue;
-                }
-
-                $jenis = JenisBarang::firstOrCreate(['nama_jenis' => trim($nama_jenis)]);
-                $sumber = SumberBarang::firstOrCreate(['nama_sumber' => trim($nama_sumber)]);
-
-                Barang::create([
-                    'nama_barang' => $nama_barang, 'jumlah' => (int)$jumlah, 'satuan' => $satuan,
-                    'id_jenis' => $jenis->id, 'id_sumber' => $sumber->id, 'keterangan' => $keterangan,
-                ]);
-            }
-
-            if (!empty($errors)) {
-                DB::rollBack();
-                return redirect()->back()->with('csv_import_errors', $errors);
-            }
-
-            // -- LOGGING --
-            LogAktivitas::create([
-                'id_pengguna' => Auth::id(),
-                'aksi' => 'IMPORT',
-                'tabel' => 'barang',
-                'keterangan' => 'Mengimpor data dari file CSV. ' . ($rowNumber - 1) . ' baris diproses.'
-            ]);
-            
-            DB::commit();
-            return redirect()->route('barang.index')->with('success', 'Import Berhasil. Semua data dari CSV telah ditambahkan.');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Terjadi error saat import: ' . $e->getMessage());
-        } finally {
-            fclose($handle);
-        }
+        // 4. Langsung kembalikan ke user tanpa menunggu
+        return redirect()->route('barang.index')
+                        ->with('success', 'Import Berhasil. Data sedang diproses di background dan akan segera muncul.');
     }
 
     /**
