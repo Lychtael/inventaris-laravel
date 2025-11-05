@@ -10,7 +10,7 @@ use App\Http\Controllers\PeminjamanController;
 use App\Http\Controllers\LogController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('dashboard');
 });
 
 Route::get('/dashboard', function () {
