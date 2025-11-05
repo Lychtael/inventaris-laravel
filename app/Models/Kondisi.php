@@ -6,7 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Kondisi extends Model
 {
-    // Beri tahu Laravel nama tabel yang benar
+    // ++ TAMBAHKAN BARIS INI ++
+    /**
+     * Beri tahu Laravel nama tabel yang benar (singular)
+     */
     protected $table = 'kondisi';
 
     // Kolom yang boleh diisi

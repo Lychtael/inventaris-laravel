@@ -1,19 +1,20 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs; // Pastikan namespace Anda benar
 
 use App\Models\Barang;
 use App\Models\JenisBarang;
 use App\Models\SumberBarang;
+use App\Models\Kondisi; // <-- TAMBAHKAN INI
 use App\Models\LogAktivitas;
-use App\Models\User; 
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage; 
+use Illuminate\Support\Facades\Storage;
 
 class ProcessCsvImport implements ShouldQueue
 {
@@ -23,10 +24,6 @@ class ProcessCsvImport implements ShouldQueue
     protected $user;
     protected $headerMap;
 
-    /**
-     * Create a new job instance.
-     * Kita simpan path file dan siapa yang mengupload
-     */
     public function __construct(string $filePath, User $user)
     {
         $this->filePath = $filePath;
@@ -38,22 +35,17 @@ class ProcessCsvImport implements ShouldQueue
             'qty' => 'qty', 'kuantitas' => 'qty', 'jumlah' => 'qty',
             'satuan' => 'satuan', 'jenis' => 'jenis', 'kategori' => 'jenis',
             'sumber' => 'sumber', 'asal' => 'sumber',
+            'kondisi' => 'kondisi', // <-- TAMBAHKAN INI
             'keterangan' => 'keterangan', 'ket' => 'keterangan'
         ];
     }
 
-    /**
-     * Execute the job.
-     * Ini adalah logika impor dari BarangController
-     */
     public function handle(): void
     {
-        // Dapatkan path absolut dari storage
         $fullPath = Storage::path($this->filePath);
 
         $handle = fopen($fullPath, "r");
         if ($handle === false) {
-            // Jika gagal, hapus file dan hentikan
             Storage::delete($this->filePath);
             return; 
         }
@@ -73,14 +65,12 @@ class ProcessCsvImport implements ShouldQueue
             }
 
             $rowNumber = 1;
-
             DB::beginTransaction();
             
             while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
                 $rowNumber++;
-                if (count($row) != count($headers)) {
-                    continue; // Lewati baris yang kolomnya tidak cocok
-                }
+                if (count($row) != count($headers)) { continue; }
+                
                 $data = array_combine($headers, $row);
 
                 $nama_barang = $data['nama_barang'] ?? null;
@@ -88,23 +78,31 @@ class ProcessCsvImport implements ShouldQueue
                 $satuan = $data['satuan'] ?? null;
                 $nama_jenis = $data['jenis'] ?? null;
                 $nama_sumber = $data['sumber'] ?? null;
+                $nama_kondisi = $data['kondisi'] ?? null; // <-- TAMBAHKAN INI
                 $keterangan = $data['keterangan'] ?? null;
                 
-                if (empty($nama_barang) || empty($satuan) || empty($nama_jenis) || empty($nama_sumber)) {
-                     continue; // Lewati baris yang datanya tidak lengkap
+                // Tambahkan 'nama_kondisi' ke validasi
+                if (empty($nama_barang) || empty($satuan) || empty($nama_jenis) || empty($nama_sumber) || empty($nama_kondisi)) {
+                     continue; 
                 }
 
+                // Cari atau buat data master
                 $jenis = JenisBarang::firstOrCreate(['nama_jenis' => trim($nama_jenis)]);
                 $sumber = SumberBarang::firstOrCreate(['nama_sumber' => trim($nama_sumber)]);
+                $kondisi = Kondisi::firstOrCreate(['nama_kondisi' => trim($nama_kondisi)]); // <-- TAMBAHKAN INI
 
+                // Buat data barang
                 Barang::create([
-                    'nama_barang' => $nama_barang, 'jumlah' => (int)$jumlah, 'satuan' => $satuan,
-                    'id_jenis' => $jenis->id, 'id_sumber' => $sumber->id, 'keterangan' => $keterangan,
+                    'nama_barang' => $nama_barang, 
+                    'jumlah' => (int)$jumlah, 
+                    'satuan' => $satuan,
+                    'id_jenis' => $jenis->id, 
+                    'id_sumber' => $sumber->id, 
+                    'id_kondisi' => $kondisi->id, // <-- TAMBAHKAN INI
+                    'keterangan' => $keterangan,
                 ]);
             }
-
-            // -- LOGGING --
-            // Kita gunakan $this->user->id, BUKAN Auth::id()
+            
             LogAktivitas::create([
                 'id_pengguna' => $this->user->id,
                 'aksi' => 'IMPORT',
@@ -116,11 +114,15 @@ class ProcessCsvImport implements ShouldQueue
 
         } catch (\Exception $e) {
             DB::rollBack();
-            // Di sini Anda bisa menambahkan log error jika mau
-            // Log::error('Import CSV Gagal: ' . $e->getMessage());
+            // Opsional: catat error jika terjadi
+            LogAktivitas::create([
+                'id_pengguna' => $this->user->id,
+                'aksi' => 'GAGAL IMPORT',
+                'tabel' => 'barang',
+                'keterangan' => 'Gagal impor CSV: ' . $e->getMessage()
+            ]);
         } finally {
             fclose($handle);
-            // PENTING: Hapus file CSV setelah selesai diproses
             Storage::delete($this->filePath);
         }
     }

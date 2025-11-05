@@ -16,8 +16,9 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            PeranSeeder::class,    // <-- WAJIB ADA DULU
-            KondisiSeeder::class,  // <-- Ini yang dari tadi
+            PeranSeeder::class,
+            KondisiSeeder::class,
+            JenisBarangSeeder::class,  
+            SumberBarangSeeder::class, 
         ]);
-    }
-}
+    }}
