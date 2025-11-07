@@ -10,23 +10,31 @@
 
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
+                        Dashboard
                     </x-nav-link>
                     <x-nav-link :href="route('barang.index')" :active="request()->routeIs('barang.*')">
-                        {{ __('Barang') }}
-                    </x-nav-link>
-                    <x-nav-link :href="route('jenisbarang.index')" :active="request()->routeIs('jenisbarang.*')">
-                        {{ __('Jenis Barang') }}
-                    </x-nav-link>
-                    <x-nav-link :href="route('sumberbarang.index')" :active="request()->routeIs('sumberbarang.*')">
-                        {{ __('Sumber Barang') }}
+                        Daftar Aset
                     </x-nav-link>
                     <x-nav-link :href="route('peminjaman.index')" :active="request()->routeIs('peminjaman.*')">
-                        {{ __('Peminjaman') }}
+                        Data Peminjaman
                     </x-nav-link>
-                    <x-nav-link :href="route('log.index')" :active="request()->routeIs('log.*')">
-                        {{ __('Riwayat Aktivitas') }}
-                    </x-nav-link>
+                    @if (Auth::user()->id_peran == 1)
+                        <x-nav-link :href="route('jenisbarang.index')" :active="request()->routeIs('jenisbarang.*')">
+                            Jenis Barang
+                        </x-nav-link>
+                        <x-nav-link :href="route('sumberbarang.index')" :active="request()->routeIs('sumberbarang.*')">
+                            Sumber Barang
+                        </x-nav-link>
+                        <x-nav-link :href="route('lokasi.index')" :active="request()->routeIs('lokasi.*')">
+                            Lokasi
+                        </x-nav-link>
+                        <x-nav-link :href="route('status-aset.index')" :active="request()->routeIs('status-aset.*')">
+                            Status Aset
+                        </x-nav-link>
+                        <x-nav-link :href="route('log.index')" :active="request()->routeIs('log.index')">
+                            Log Aktivitas
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 

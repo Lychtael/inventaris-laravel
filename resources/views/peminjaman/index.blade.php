@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ $judul ?? 'Data Peminjaman' }}
+        <h2 class="font-semibold text-xl text-white leading-tight">
+            {{ $judul ?? 'Data Peminjaman Aset' }}
         </h2>
     </x-slot>
 
@@ -10,7 +10,7 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
 
-                    <h3>Data Peminjaman</h3>
+                    <h3>{{ $judul ?? 'Data Peminjaman Aset' }}</h3>
                     <hr class="my-3">
 
                     @if (session('success'))
@@ -26,16 +26,19 @@
                         </div>
                     @endif
 
-                    <a href="{{ route('peminjaman.create') }}" class="btn btn-success mb-3">Catat Peminjaman Baru</a>
+                    <div class="d-flex justify-content-start mb-3">
+                        <a href="{{ route('peminjaman.create') }}" class="btn btn-success me-2">Catat Peminjaman Baru</a>
+                    </div>
 
                     <div class="table-responsive">
                         <table class="table table-bordered table-striped">
                             <thead>
                                 <tr>
                                     <th>No</th>
-                                    <th>Nama Barang</th>
-                                    <th>Peminjam</th>
-                                    <th>Jumlah</th>
+                                    <th>Nama Aset</th>
+                                    <th>Register</th>
+                                    <th>Merk/Type</th>
+                                    <th>Nama Peminjam</th>
                                     <th>Tgl Pinjam</th>
                                     <th>Tgl Kembali</th>
                                     <th>Status</th>
@@ -43,26 +46,33 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($peminjaman as $pinjam)
+                                @forelse ($peminjaman as $item)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
-                                    <td>{{ $pinjam->barang->nama_barang ?? 'BARANG DIHAPUS' }}</td>
-                                    <td>{{ $pinjam->peminjam }}</td>
-                                    <td>{{ $pinjam->jumlah_dipinjam }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($pinjam->tanggal_pinjam)->format('d M Y') }}</td>
-                                    <td>{{ $pinjam->tanggal_kembali ? \Carbon\Carbon::parse($pinjam->tanggal_kembali)->format('d M Y') : '-' }}</td>
+                                    <td>{{ $item->barang->nama_barang ?? 'Aset Dihapus' }}</td>
+                                    <td>{{ $item->barang->register ?? 'N/A' }}</td>
+                                    <td>{{ $item->barang->merk_type ?? 'N/A' }}</td>
+                                    <td>{{ $item->peminjam_eksternal ?? ($item->userPeminjam->name ?? 'N/A') }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($item->tanggal_pinjam)->format('d/m/Y') }}</td>
                                     <td>
-                                        @if ($pinjam->status == 'dipinjam')
-                                            <span class="badge bg-danger">Dipinjam</span>
+                                        @if($item->tanggal_kembali)
+                                            {{ \Carbon\Carbon::parse($item->tanggal_kembali)->format('d/m/Y') }}
                                         @else
-                                            <span class="badge bg-success">Dikembalikan</span>
+                                            -
                                         @endif
                                     </td>
                                     <td>
-                                        @if ($pinjam->status == 'dipinjam')
-                                            <form action="{{ route('peminjaman.kembali', $pinjam->id) }}" method="POST" onsubmit="return confirm('Konfirmasi pengembalian barang ini?');">
+                                        @if($item->status_pinjam == 'Dikembalikan')
+                                            <span class="badge bg-success">Dikembalikan</span>
+                                        @else
+                                            <span class="badge bg-warning text-dark">Dipinjam</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($item->status_pinjam == 'Dipinjam')
+                                            <form action="{{ route('peminjaman.kembali', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin aset ini sudah dikembalikan?');">
                                                 @csrf
-                                                <button type="submit" class="btn btn-sm btn-success">Kembalikan</button>
+                                                <button type="submit" class="btn btn-sm btn-primary">Kembalikan</button>
                                             </form>
                                         @else
                                             -
@@ -71,14 +81,14 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="8" class="text-center">Belum ada data peminjaman.</td>
+                                    <td colspan="9" class="text-center">Belum ada data peminjaman.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
 
-                </div>
+                </div>w
             </div>
         </div>
     </div>

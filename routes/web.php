@@ -8,6 +8,8 @@ use App\Http\Controllers\JenisBarangController;
 use App\Http\Controllers\SumberBarangController;
 use App\Http\Controllers\PeminjamanController;
 use App\Http\Controllers\LogController;
+use App\Http\Controllers\LokasiController;
+use App\Http\Controllers\StatusAsetController;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -42,25 +44,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
     // == RUTE KHUSUS ADMIN (id_peran = 1) ==
-    // Kita gunakan middleware 'cek.peran' yang baru kita buat
     Route::middleware(['cek.peran:1'])->group(function () {
 
         // Rute Jenis Barang
-        Route::post('/jenisbarang/getubah', [JenisBarangController::class, 'getUbah'])->name('jenisbarang.getubah');
         Route::resource('jenisbarang', JenisBarangController::class)->only([
             'index', 'store', 'update', 'destroy'
         ]);
 
         // Rute Sumber Barang
-        Route::post('/sumberbarang/getubah', [SumberBarangController::class, 'getUbah'])->name('sumberbarang.getubah');
         Route::resource('sumberbarang', SumberBarangController::class)->only([
             'index', 'store', 'update', 'destroy'
         ]);
 
+        Route::resource('lokasi', LokasiController::class);
+
+        // ++ TAMBAHKAN RUTE BARU INI ++
+        Route::resource('status-aset', StatusAsetController::class);
+
         // Rute Log Aktivitas
         Route::get('/log', [LogController::class, 'index'])->name('log.index');
-    });
 
+        // ++ TAMBAHKAN RUTE BARU INI ++
+        Route::resource('lokasi', LokasiController::class);
+        // (Kita juga akan tambahkan 'status-aset' di sini nanti)
+
+    });
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
