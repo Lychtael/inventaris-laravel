@@ -2,79 +2,105 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ProcessCsvImport;
-use Illuminate\Support\Facades\Storage;
 use App\Models\Barang;
 use App\Models\JenisBarang;
 use App\Models\SumberBarang;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Symfony\Component\HttpFoundation\StreamedResponse;
-use App\Models\LogAktivitas;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Kondisi;
+use App\Models\Lokasi;
+use App\Models\StatusAset;
+use App\Models\LogAktivitas;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+// Hapus 'StreamedResponse' karena ekspor dinonaktifkan
 
 class BarangController extends Controller
 {
     /**
-     * Menampilkan daftar barang dengan filter dan pagination.
+     * Menampilkan daftar ASET (logika baru)
      */
     public function index(Request $request)
     {
         $limit = $request->get('limit', 25);
-        // Tambahkan 'kondisi' di sini
-        $query = Barang::with(['jenis', 'sumber', 'kondisi']); 
-    
-        if ($request->filled('jenis')) {
-            $query->where('id_jenis', $request->jenis);
+        
+        // Eager load semua relasi baru
+        $query = Barang::with(['jenis', 'sumber', 'kondisi', 'lokasi', 'statusAset']);
+
+        // Filter baru (opsional, bisa kita tambahkan di view nanti)
+        if ($request->filled('id_jenis')) {
+            $query->where('id_jenis', $request->id_jenis);
         }
-        if ($request->filled('sumber')) {
-            $query->where('id_sumber', $request->sumber);
+        if ($request->filled('id_sumber')) {
+            $query->where('id_sumber', $request->id_sumber);
         }
-    
+        if ($request->filled('id_kondisi')) {
+            $query->where('id_kondisi', $request->id_kondisi);
+        }
+        if ($request->filled('id_lokasi')) {
+            $query->where('id_lokasi', $request->id_lokasi);
+        }
+        if ($request->filled('id_status_aset')) {
+            $query->where('id_status_aset', $request->id_status_aset);
+        }
+        
         $barang = $query->orderBy('id', 'desc')->paginate($limit)->withQueryString();
+        
+        // Ambil semua data master untuk filter
         $jenis_list = JenisBarang::orderBy('nama_jenis', 'asc')->get();
         $sumber_list = SumberBarang::orderBy('nama_sumber', 'asc')->get();
-    
+        $kondisi_list = Kondisi::orderBy('nama_kondisi', 'asc')->get();
+        $lokasi_list = Lokasi::orderBy('nama_lokasi', 'asc')->get();
+        $status_aset_list = StatusAset::orderBy('nama_status', 'asc')->get();
+
         return view('barang.index', [
             'barang' => $barang,
             'jenis_list' => $jenis_list,
             'sumber_list' => $sumber_list,
-            'current_filters' => $request->only(['jenis', 'sumber']),
-            'judul' => 'Daftar Barang'
+            'kondisi_list' => $kondisi_list,
+            'lokasi_list' => $lokasi_list,
+            'status_aset_list' => $status_aset_list,
+            'current_filters' => $request->only(['id_jenis', 'id_sumber', 'id_kondisi', 'id_lokasi', 'id_status_aset']),
+            'judul' => 'Daftar Aset Barang'
         ]);
     }
 
     /**
-     * Menampilkan form untuk menambah barang baru.
+     * Menampilkan form untuk menambah ASET baru.
      */
     public function create()
     {
-        $jenis = JenisBarang::orderBy('nama_jenis', 'asc')->get();
-        $sumber = SumberBarang::orderBy('nama_sumber', 'asc')->get();
-        $kondisi = Kondisi::orderBy('nama_kondisi', 'asc')->get(); // <-- TAMBAHKAN INI
-    
-        return view('barang.create', [
-            'jenis' => $jenis,
-            'sumber' => $sumber,
-            'kondisi' => $kondisi, // <-- TAMBAHKAN INI
-            'judul' => 'Tambah Barang'
-        ]);
+        // Ambil semua data master untuk dropdown form
+        $data = [
+            'jenis' => JenisBarang::orderBy('nama_jenis', 'asc')->get(),
+            'sumber' => SumberBarang::orderBy('nama_sumber', 'asc')->get(),
+            'kondisi' => Kondisi::orderBy('nama_kondisi', 'asc')->get(),
+            'lokasi' => Lokasi::orderBy('nama_lokasi', 'asc')->get(),
+            'status_aset' => StatusAset::orderBy('nama_status', 'asc')->get(),
+            'judul' => 'Tambah Aset'
+        ];
+        
+        return view('barang.create', $data);
     }
 
     /**
-     * Menyimpan data barang baru ke database.
+     * Menyimpan ASET baru ke database (logika baru).
      */
     public function store(Request $request)
     {
+        // Validasi baru (tanpa 'jumlah' dan 'satuan')
         $validated = $request->validate([
-            'nama_barang' => 'required|string|max:100',
-            'jumlah' => 'required|integer|min:1',
-            'satuan' => 'required|string|max:20',
+            'nama_barang' => 'required|string|max:255',
+            'kode_barang' => 'nullable|string|max:100',
+            'register' => 'nullable|string|max:100',
+            'merk_type' => 'nullable|string|max:100',
+            'tahun_pembelian' => 'nullable|integer|min:1900|max:'.date('Y'),
+            'harga' => 'nullable|numeric|min:0',
+            'keterangan' => 'nullable|string',
             'id_jenis' => 'required|exists:jenis_barang,id',
             'id_sumber' => 'required|exists:sumber_barang,id',
-            'id_kondisi' => 'required|exists:kondisi,id', // <-- TAMBAHKAN INI
-            'keterangan' => 'nullable|string',
+            'id_kondisi' => 'required|exists:kondisi,id',
+            'id_lokasi' => 'required|exists:lokasi,id',
+            'id_status_aset' => 'required|exists:status_aset,id',
         ]);
 
         $barang = Barang::create($validated);
@@ -84,56 +110,64 @@ class BarangController extends Controller
             'id_pengguna' => Auth::id(),
             'aksi' => 'TAMBAH',
             'tabel' => 'barang',
-            'keterangan' => 'Menambah barang baru: ' . $barang->nama_barang
+            'keterangan' => 'Menambah aset baru: ' . $barang->nama_barang . ' (Reg: ' . $barang->register . ')'
         ]);
 
         return redirect()->route('barang.index')
-                         ->with('success', 'Data Barang berhasil ditambahkan.');
+                         ->with('success', 'Data Aset berhasil ditambahkan.');
     }
 
     /**
-     * Menampilkan detail satu barang.
+     * Menampilkan detail satu ASET.
      */
     public function show(Barang $barang)
     {
-        $barang->load(['jenis', 'sumber']);
+        // Load semua relasi
+        $barang->load(['jenis', 'sumber', 'kondisi', 'lokasi', 'statusAset']);
         return view('barang.detail', [
             'barang' => $barang,
-            'judul' => 'Detail Barang'
+            'judul' => 'Detail Aset'
         ]);
     }
 
     /**
-     * Menampilkan form untuk mengedit barang.
+     * Menampilkan form untuk mengedit ASET.
      */
     public function edit(Barang $barang)
     {
-        $jenis = JenisBarang::orderBy('nama_jenis', 'asc')->get();
-        $sumber = SumberBarang::orderBy('nama_sumber', 'asc')->get();
-        $kondisi = Kondisi::orderBy('nama_kondisi', 'asc')->get(); // <-- TAMBAHKAN INI
-    
-        return view('barang.edit', [
+        // Ambil semua data master untuk dropdown form
+        $data = [
             'barang' => $barang,
-            'jenis' => $jenis,
-            'sumber' => $sumber,
-            'kondisi' => $kondisi, // <-- TAMBAHKAN INI
-            'judul' => 'Edit Barang'
-        ]);
+            'jenis' => JenisBarang::orderBy('nama_jenis', 'asc')->get(),
+            'sumber' => SumberBarang::orderBy('nama_sumber', 'asc')->get(),
+            'kondisi' => Kondisi::orderBy('nama_kondisi', 'asc')->get(),
+            'lokasi' => Lokasi::orderBy('nama_lokasi', 'asc')->get(),
+            'status_aset' => StatusAset::orderBy('nama_status', 'asc')->get(),
+            'judul' => 'Edit Aset'
+        ];
+        
+        return view('barang.edit', $data);
     }
 
     /**
-     * Memperbarui data barang di database.
+     * Memperbarui data ASET di database (logika baru).
      */
     public function update(Request $request, Barang $barang)
     {
+        // Validasi baru (tanpa 'jumlah' dan 'satuan')
         $validated = $request->validate([
-            'nama_barang' => 'required|string|max:100',
-            'jumlah' => 'required|integer|min:0',
-            'satuan' => 'required|string|max:20',
+            'nama_barang' => 'required|string|max:255',
+            'kode_barang' => 'nullable|string|max:100',
+            'register' => 'nullable|string|max:100',
+            'merk_type' => 'nullable|string|max:100',
+            'tahun_pembelian' => 'nullable|integer|min:1900|max:'.date('Y'),
+            'harga' => 'nullable|numeric|min:0',
+            'keterangan' => 'nullable|string',
             'id_jenis' => 'required|exists:jenis_barang,id',
             'id_sumber' => 'required|exists:sumber_barang,id',
-            'id_kondisi' => 'required|exists:kondisi,id', // <-- TAMBAHKAN INI
-            'keterangan' => 'nullable|string',
+            'id_kondisi' => 'required|exists:kondisi,id',
+            'id_lokasi' => 'required|exists:lokasi,id',
+            'id_status_aset' => 'required|exists:status_aset,id',
         ]);
 
         $barang->update($validated);
@@ -143,19 +177,19 @@ class BarangController extends Controller
             'id_pengguna' => Auth::id(),
             'aksi' => 'UBAH',
             'tabel' => 'barang',
-            'keterangan' => 'Mengubah data barang: ' . $barang->nama_barang
+            'keterangan' => 'Mengubah data aset: ' . $barang->nama_barang . ' (Reg: ' . $barang->register . ')'
         ]);
 
         return redirect()->route('barang.index')
-                         ->with('success', 'Data Barang berhasil diubah.');
+                         ->with('success', 'Data Aset berhasil diubah.');
     }
 
     /**
-     * Menghapus data barang dari database.
+     * Menghapus data ASET dari database.
      */
     public function destroy(Barang $barang)
     {
-        $namaBarang = $barang->nama_barang;
+        $namaBarang = $barang->nama_barang . ' (Reg: ' . $barang->register . ')';
         
         try {
             $barang->delete();
@@ -165,85 +199,54 @@ class BarangController extends Controller
                 'id_pengguna' => Auth::id(),
                 'aksi' => 'HAPUS',
                 'tabel' => 'barang',
-                'keterangan' => 'Menghapus barang: ' . $namaBarang
+                'keterangan' => 'Menghapus aset: ' . $namaBarang
             ]);
 
             return redirect()->route('barang.index')
-                             ->with('success', 'Data Barang berhasil dihapus.');
+                             ->with('success', 'Data Aset berhasil dihapus.');
         } catch (\Illuminate\Database\QueryException $e) {
+            // Kita perlu mengubah pesan error ini, mungkin terkait peminjaman
             return redirect()->route('barang.index')
-                             ->with('error', 'Data Barang gagal dihapus. Mungkin sedang dipinjam atau terkait data lain.');
+                             ->with('error', 'Data Aset gagal dihapus. Mungkin terkait data peminjaman.');
         }
     }
 
     /**
-     * Mencari barang untuk AJAX search.
+     * DINONAKTIFKAN SEMENTARA - Logika harus dirombak total
      */
     public function cari(Request $request)
     {
-        $keyword = $request->input('keyword');
-        $barang = Barang::with(['jenis', 'sumber'])
-                ->where('nama_barang', 'LIKE', "%$keyword%")
-                ->orderBy('id', 'desc')
-                ->get();
-        return view('barang._search_results', ['barang' => $barang]);
+        // Logika lama (berbasis 'jumlah') tidak valid lagi.
+        // Perlu ditulis ulang untuk mencari berdasarkan 'kode_barang', 'register', 'merk_type'
+        return response()->json(['error' => 'Fitur pencarian sedang dalam perbaikan.'], 500);
     }
 
     /**
-     * Menampilkan form upload CSV.
+     * DINONAKTIFKAN SEMENTARA
      */
     public function importCsvForm()
     {
-        return view('barang.import', [
-            'judul' => 'Import Barang dari CSV'
-        ]);
+        return redirect()->route('barang.index')
+                         ->with('error', 'Fitur Impor CSV sedang dalam perbaikan besar.');
     }
 
     /**
-     * Memproses file CSV yang di-upload.
+     * DINONAKTIFKAN SEMENTARA - Logika harus dirombak total
      */
     public function importCsv(Request $request)
     {
-        $request->validate(['csv_file' => 'required|file|mimes:csv,txt']);
-
-        // 1. Simpan file ke storage (misal: storage/app/imports)
-        // Kita simpan path filenya
-        $path = $request->file('csv_file')->store('imports');
-
-        // 2. Dapatkan user yang sedang login
-        $user = Auth::user();
-
-        // 3. "Lempar" tugas ini ke background job
-        ProcessCsvImport::dispatch($path, $user);
-
-        // 4. Langsung kembalikan ke user tanpa menunggu
+        // Job ProcessCsvImport yang lama tidak valid.
         return redirect()->route('barang.index')
-                        ->with('success', 'Import Berhasil. Data sedang diproses di background dan akan segera muncul.');
+                         ->with('error', 'Fitur Impor CSV sedang dalam perbaikan besar.');
     }
 
     /**
-     * Mengekspor data barang ke file CSV.
+     * DINONAKTIFKAN SEMENTARA - Logika harus dirombak total
      */
     public function exportCsv()
     {
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="data_barang_' . date('Y-m-d') . '.csv"',
-        ];
-        $data_barang = Barang::with(['jenis', 'sumber'])->get();
-
-        $callback = function() use ($data_barang) {
-            $output = fopen('php://output', 'w');
-            fputcsv($output, ['Nama Barang', 'Kuantitas', 'Satuan', 'Jenis', 'Sumber', 'Keterangan']);
-            foreach ($data_barang as $barang) {
-                fputcsv($output, [
-                    $barang->nama_barang, $barang->jumlah, $barang->satuan,
-                    $barang->jenis->nama_jenis ?? '-', $barang->sumber->nama_sumber ?? '-',
-                    $barang->keterangan
-                ]);
-            }
-            fclose($output);
-        };
-        return new StreamedResponse($callback, 200, $headers);
+        // Logika ekspor lama tidak valid.
+        return redirect()->route('barang.index')
+                         ->with('error', 'Fitur Ekspor CSV sedang dalam perbaikan besar.');
     }
 }

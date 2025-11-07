@@ -28,10 +28,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
     // Rute Barang
-    Route::post('/barang/cari', [BarangController::class, 'cari'])->name('barang.cari');
-    Route::get('/barang/export-csv', [BarangController::class, 'exportCsv'])->name('barang.exportCsv');
-    Route::get('/barang/import-csv', [BarangController::class, 'importCsvForm'])->name('barang.importCsvForm');
-    Route::post('/barang/import-csv', [BarangController::class, 'importCsv'])->name('barang.importCsv');
+    // Route::post('/barang/cari', [BarangController::class, 'cari'])->name('barang.cari');
+    // Route::get('/barang/export-csv', [BarangController::class, 'exportCsv'])->name('barang.exportCsv');
+    // Route::get('/barang/import-csv', [BarangController::class, 'importCsvForm'])->name('barang.importCsvForm');
+    // Route::post('/barang/import-csv', [BarangController::class, 'importCsv'])->name('barang.importCsv');
     Route::resource('barang', BarangController::class);
 
     // Rute Peminjaman
