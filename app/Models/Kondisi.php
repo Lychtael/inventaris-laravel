@@ -11,8 +11,7 @@ class Kondisi extends Model
      * Beri tahu Laravel nama tabel yang benar (singular)
      */
     protected $table = 'kondisi';
-
-    // Kolom yang boleh diisi
+    public $timestamps = true;
     protected $fillable = ['nama_kondisi'];
 
     /**
