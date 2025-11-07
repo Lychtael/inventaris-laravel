@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\JenisBarang;
-use Illuminate\Http\Request;
 use App\Models\LogAktivitas;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class JenisBarangController extends Controller
@@ -14,13 +14,24 @@ class JenisBarangController extends Controller
      */
     public function index()
     {
-        $data['jenis_barang'] = JenisBarang::orderBy('nama_jenis', 'asc')->get();
-        $data['judul'] = 'Jenis Barang';
-        return view('jenisbarang.index', $data);
+        return view('jenis-barang.index', [
+            'jenis_barang' => JenisBarang::orderBy('nama_jenis', 'asc')->get(),
+            'judul' => 'Kelola Jenis Barang'
+        ]);
     }
 
     /**
-     * Menyimpan jenis barang baru (dari modal tambah).
+     * Menampilkan form untuk membuat jenis baru.
+     */
+    public function create()
+    {
+        return view('jenis-barang.create', [
+            'judul' => 'Tambah Jenis Barang Baru'
+        ]);
+    }
+
+    /**
+     * Menyimpan jenis baru ke database.
      */
     public function store(Request $request)
     {
@@ -28,14 +39,13 @@ class JenisBarangController extends Controller
             'nama_jenis' => 'required|string|max:100|unique:jenis_barang,nama_jenis'
         ]);
 
-        JenisBarang::create($validated);
+        $jenis = JenisBarang::create($validated);
         
-        // -- LOGGING --
         LogAktivitas::create([
             'id_pengguna' => Auth::id(),
             'aksi' => 'TAMBAH',
             'tabel' => 'jenis_barang',
-            'keterangan' => 'Menambah jenis baru: ' . $validated['nama_jenis']
+            'keterangan' => 'Menambah jenis baru: ' . $jenis->nama_jenis
         ]);
 
         return redirect()->route('jenisbarang.index')
@@ -43,19 +53,18 @@ class JenisBarangController extends Controller
     }
 
     /**
-     * Mengambil data untuk modal edit (AJAX).
+     * Menampilkan form untuk mengedit jenis.
      */
-    public function getUbah(Request $request)
+    public function edit(JenisBarang $jenisBarang)
     {
-        $jenisBarang = JenisBarang::find($request->id);
-        if ($jenisBarang) {
-            return response()->json($jenisBarang);
-        }
-        return response()->json(['error' => 'Data not found'], 404);
+        return view('jenis-barang.edit', [
+            'jenisBarang' => $jenisBarang,
+            'judul' => 'Edit Jenis Barang'
+        ]);
     }
 
     /**
-     * Memperbarui jenis barang (dari modal edit).
+     * Memperbarui jenis barang.
      */
     public function update(Request $request, JenisBarang $jenisBarang)
     {
@@ -65,12 +74,11 @@ class JenisBarangController extends Controller
 
         $jenisBarang->update($validated);
 
-        // -- LOGGING --
         LogAktivitas::create([
             'id_pengguna' => Auth::id(),
             'aksi' => 'UBAH',
             'tabel' => 'jenis_barang',
-            'keterangan' => 'Mengubah jenis barang: ' . $validated['nama_jenis']
+            'keterangan' => 'Mengubah jenis barang: ' . $jenisBarang->nama_jenis
         ]);
 
         return redirect()->route('jenisbarang.index')
@@ -82,23 +90,23 @@ class JenisBarangController extends Controller
      */
     public function destroy(JenisBarang $jenisBarang)
     {
-        $namaJenis = $jenisBarang->nama_jenis; // Simpan nama untuk log
-        try {
-            $jenisBarang->delete();
-            
-            // -- LOGGING --
-            LogAktivitas::create([
-                'id_pengguna' => Auth::id(),
-                'aksi' => 'HAPUS',
-                'tabel' => 'jenis_barang',
-                'keterangan' => 'Menghapus jenis barang: ' . $namaJenis
-            ]);
-
+        // Cek apakah masih dipakai oleh barang
+        if ($jenisBarang->barang()->count() > 0) {
             return redirect()->route('jenisbarang.index')
-                             ->with('success', 'Jenis Barang berhasil dihapus.');
-        } catch (\Illuminate\Database\QueryException $e) {
-            return redirect()->route('jenisbarang.index')
-                             ->with('error', 'Gagal menghapus. Jenis barang ini mungkin sedang digunakan oleh data barang.');
+                             ->with('error', 'Gagal: Jenis ini masih digunakan oleh data aset.');
         }
+
+        $namaJenis = $jenisBarang->nama_jenis;
+        $jenisBarang->delete();
+        
+        LogAktivitas::create([
+            'id_pengguna' => Auth::id(),
+            'aksi' => 'HAPUS',
+            'tabel' => 'jenis_barang',
+            'keterangan' => 'Menghapus jenis barang: ' . $namaJenis
+        ]);
+
+        return redirect()->route('jenisbarang.index')
+                         ->with('success', 'Jenis Barang berhasil dihapus.');
     }
 }

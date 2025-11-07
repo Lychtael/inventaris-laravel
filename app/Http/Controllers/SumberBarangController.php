@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\SumberBarang;
-use Illuminate\Http\Request;
 use App\Models\LogAktivitas;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class SumberBarangController extends Controller
@@ -14,13 +14,24 @@ class SumberBarangController extends Controller
      */
     public function index()
     {
-        $data['sumber_barang'] = SumberBarang::orderBy('nama_sumber', 'asc')->get();
-        $data['judul'] = 'Sumber Barang';
-        return view('sumberbarang.index', $data);
+        return view('sumber-barang.index', [
+            'sumber_barang' => SumberBarang::orderBy('nama_sumber', 'asc')->get(),
+            'judul' => 'Kelola Sumber Barang'
+        ]);
     }
 
     /**
-     * Menyimpan sumber barang baru.
+     * Menampilkan form untuk membuat sumber baru.
+     */
+    public function create()
+    {
+        return view('sumber-barang.create', [
+            'judul' => 'Tambah Sumber Barang Baru'
+        ]);
+    }
+
+    /**
+     * Menyimpan sumber baru ke database.
      */
     public function store(Request $request)
     {
@@ -28,14 +39,13 @@ class SumberBarangController extends Controller
             'nama_sumber' => 'required|string|max:100|unique:sumber_barang,nama_sumber'
         ]);
 
-        SumberBarang::create($validated);
+        $sumber = SumberBarang::create($validated);
         
-        // -- LOGGING --
         LogAktivitas::create([
             'id_pengguna' => Auth::id(),
             'aksi' => 'TAMBAH',
             'tabel' => 'sumber_barang',
-            'keterangan' => 'Menambah sumber baru: ' . $validated['nama_sumber']
+            'keterangan' => 'Menambah sumber baru: ' . $sumber->nama_sumber
         ]);
 
         return redirect()->route('sumberbarang.index')
@@ -43,15 +53,14 @@ class SumberBarangController extends Controller
     }
 
     /**
-     * Mengambil data untuk modal edit (AJAX).
+     * Menampilkan form untuk mengedit sumber.
      */
-    public function getUbah(Request $request)
+    public function edit(SumberBarang $sumberBarang)
     {
-        $sumberBarang = SumberBarang::find($request->id);
-        if ($sumberBarang) {
-            return response()->json($sumberBarang);
-        }
-        return response()->json(['error' => 'Data not found'], 404);
+        return view('sumber-barang.edit', [
+            'sumberBarang' => $sumberBarang,
+            'judul' => 'Edit Sumber Barang'
+        ]);
     }
 
     /**
@@ -65,12 +74,11 @@ class SumberBarangController extends Controller
 
         $sumberBarang->update($validated);
 
-        // -- LOGGING --
         LogAktivitas::create([
             'id_pengguna' => Auth::id(),
             'aksi' => 'UBAH',
             'tabel' => 'sumber_barang',
-            'keterangan' => 'Mengubah sumber barang: ' . $validated['nama_sumber']
+            'keterangan' => 'Mengubah sumber barang: ' . $sumberBarang->nama_sumber
         ]);
 
         return redirect()->route('sumberbarang.index')
@@ -82,23 +90,23 @@ class SumberBarangController extends Controller
      */
     public function destroy(SumberBarang $sumberBarang)
     {
-        $namaSumber = $sumberBarang->nama_sumber; // Simpan nama untuk log
-        try {
-            $sumberBarang->delete();
-            
-            // -- LOGGING --
-            LogAktivitas::create([
-                'id_pengguna' => Auth::id(),
-                'aksi' => 'HAPUS',
-                'tabel' => 'sumber_barang',
-                'keterangan' => 'Menghapus sumber barang: ' . $namaSumber
-            ]);
-
+        // Cek apakah masih dipakai oleh barang
+        if ($sumberBarang->barang()->count() > 0) {
             return redirect()->route('sumberbarang.index')
-                             ->with('success', 'Sumber Barang berhasil dihapus.');
-        } catch (\Illuminate\Database\QueryException $e) {
-            return redirect()->route('sumberbarang.index')
-                             ->with('error', 'Gagal menghapus. Sumber barang ini mungkin sedang digunakan oleh data barang.');
+                             ->with('error', 'Gagal: Sumber ini masih digunakan oleh data aset.');
         }
+        
+        $namaSumber = $sumberBarang->nama_sumber;
+        $sumberBarang->delete();
+        
+        LogAktivitas::create([
+            'id_pengguna' => Auth::id(),
+            'aksi' => 'HAPUS',
+            'tabel' => 'sumber_barang',
+            'keterangan' => 'Menghapus sumber barang: ' . $namaSumber
+        ]);
+
+        return redirect()->route('sumberbarang.index')
+                         ->with('success', 'Sumber Barang berhasil dihapus.');
     }
 }

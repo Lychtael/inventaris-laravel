@@ -31,7 +31,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Rute Barang
     Route::post('/barang/cari', [BarangController::class, 'cari'])->name('barang.cari');
-    // Route::get('/barang/export-csv', [BarangController::class, 'exportCsv'])->name('barang.exportCsv');
+    Route::get('/barang/export-csv', [BarangController::class, 'exportCsv'])->name('barang.exportCsv');
     Route::get('/barang/import-csv', [BarangController::class, 'importCsvForm'])->name('barang.importCsvForm');
     Route::post('/barang/import-csv', [BarangController::class, 'importCsv'])->name('barang.importCsv');
     Route::resource('barang', BarangController::class);
@@ -47,15 +47,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['cek.peran:1'])->group(function () {
 
         // Rute Jenis Barang
-        Route::resource('jenisbarang', JenisBarangController::class)->only([
-            'index', 'store', 'update', 'destroy'
-        ]);
+        Route::resource('jenisbarang', JenisBarangController::class);
 
         // Rute Sumber Barang
-        Route::resource('sumberbarang', SumberBarangController::class)->only([
-            'index', 'store', 'update', 'destroy'
-        ]);
+        Route::resource('sumberbarang', SumberBarangController::class);
 
+        // Rute Lokasi
         Route::resource('lokasi', LokasiController::class);
 
         // ++ TAMBAHKAN RUTE BARU INI ++

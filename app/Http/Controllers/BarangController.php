@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Jobs\ProcessAsetImport;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BarangController extends Controller
 {
@@ -269,12 +270,60 @@ class BarangController extends Controller
     }
 
     /**
-     * DINONAKTIFKAN SEMENTARA - Logika harus dirombak total
+     * Mengekspor data aset ke file CSV (LOGIKA ASET BARU).
      */
     public function exportCsv()
     {
-        // Logika ekspor lama tidak valid.
-        return redirect()->route('barang.index')
-                         ->with('error', 'Fitur Ekspor CSV sedang dalam perbaikan besar.');
+        $fileName = 'data_aset_inventaris_' . date('Y-m-d') . '.csv';
+
+        // Ambil semua data aset dengan relasinya
+        $data_barang = Barang::with(['jenis', 'sumber', 'kondisi', 'lokasi', 'statusAset'])->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ];
+
+        $callback = function() use ($data_barang) {
+            $output = fopen('php://output', 'w');
+            
+            // Tulis Header Kolom
+            fputcsv($output, [
+                'Nama Barang',
+                'Kode Barang',
+                'Register',
+                'Merk/Type',
+                'Tahun Pembelian',
+                'Harga',
+                'Jenis',
+                'Sumber Perolehan',
+                'Kondisi',
+                'Lokasi',
+                'Status Aset',
+                'Keterangan'
+            ]);
+
+            // Tulis Data Aset
+            foreach ($data_barang as $barang) {
+                fputcsv($output, [
+                    $barang->nama_barang,
+                    $barang->kode_barang,
+                    $barang->register,
+                    $barang->merk_type,
+                    $barang->tahun_pembelian,
+                    $barang->harga,
+                    $barang->jenis->nama_jenis ?? 'N/A',
+                    $barang->sumber->nama_sumber ?? 'N/A',
+                    $barang->kondisi->nama_kondisi ?? 'N/A',
+                    $barang->lokasi->nama_lokasi ?? 'N/A',
+                    $barang->statusAset->nama_status ?? 'N/A',
+                    $barang->keterangan
+                ]);
+            }
+            fclose($output);
+        };
+
+        // Kembalikan response sebagai file download
+        return new StreamedResponse($callback, 200, $headers);
     }
 }
