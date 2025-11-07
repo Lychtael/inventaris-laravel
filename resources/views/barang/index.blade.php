@@ -30,58 +30,59 @@
                     <div class="d-flex justify-content-start mb-3">
                         <a href="{{ route('barang.create') }}" class="btn btn-success me-2">Tambah Aset Baru</a>
                         {{-- Tombol Impor/Ekspor dinonaktifkan
-                        <a href="{{ route('barang.exportCsv') }}" class="btn btn-primary me-2">Export ke CSV</a>
-                        <a href="{{ route('barang.importCsvForm') }}" class="btn btn-success me-2">Import dari CSV</a> 
-                        --}}
+                        {{-- Ekspor masih nonaktif --}}
+                        {{-- <a href="{{ route('barang.exportCsv') }}" class="btn btn-primary me-2">Export ke CSV</a> --}}
+                        <a href="{{ route('barang.importCsvForm') }}" class="btn btn-success me-2">Import dari CSV</a>
                     </div>
 
                     
                     <div class="card mb-3">
                         <div class="card-body">
-                            <form action="{{ route('barang.index') }}" method="get">
-                                <div class="row align-items-end">
-                                    <div class="col-md-3">
-                                        <label class="form-label">Filter Jenis:</label>
-                                        <select name="id_jenis" class="form-select">
-                                            <option value="">Semua Jenis</option>
-                                            @foreach($jenis_list as $item)
-                                                <option value="{{ $item->id }}" {{ ($current_filters['id_jenis'] ?? '') == $item->id ? 'selected' : '' }}>{{ $item->nama_jenis }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label">Filter Kondisi:</label>
-                                        <select name="id_kondisi" class="form-select">
-                                            <option value="">Semua Kondisi</option>
-                                            @foreach($kondisi_list as $item)
-                                                <option value="{{ $item->id }}" {{ ($current_filters['id_kondisi'] ?? '') == $item->id ? 'selected' : '' }}>{{ $item->nama_kondisi }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Filter Lokasi:</label>
-                                        <select name="id_lokasi" class="form-select">
-                                            <option value="">Semua Lokasi</option>
-                                            @foreach($lokasi_list as $item)
-                                                <option value="{{ $item->id }}" {{ ($current_filters['id_lokasi'] ?? '') == $item->id ? 'selected' : '' }}>{{ $item->nama_lokasi }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label">Filter Status:</label>
-                                        <select name="id_status_aset" class="form-select">
-                                            <option value="">Semua Status</option>
-                                            @foreach($status_aset_list as $item)
-                                                <option value="{{ $item->id }}" {{ ($current_filters['id_status_aset'] ?? '') == $item->id ? 'selected' : '' }}>{{ $item->nama_status }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2 d-flex align-items-end">
-                                        <button type="submit" class="btn btn-primary me-2 w-100">Filter</button>
-                                        <a href="{{ route('barang.index') }}" class="btn btn-secondary w-100">Reset</a>
-                                    </div>
+                            <div class="row align-items-end">
+                                {{-- Bagian Filter (Kiri) --}}
+                                <div class="col-md-8">
+                                    <form action="{{ route('barang.index') }}" method="get">
+                                        <div class="row align-items-end">
+                                            <div class="col-md-3">
+                                                <label class="form-label">Filter Jenis:</label>
+                                                <select name="id_jenis" class="form-select">
+                                                    <option value="">Semua Jenis</option>
+                                                    @foreach($jenis_list as $item)
+                                                        <option value="{{ $item->id }}" {{ ($current_filters['id_jenis'] ?? '') == $item->id ? 'selected' : '' }}>{{ $item->nama_jenis }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Filter Kondisi:</label>
+                                                <select name="id_kondisi" class="form-select">
+                                                    <option value="">Semua Kondisi</option>
+                                                    @foreach($kondisi_list as $item)
+                                                        <option value="{{ $item->id }}" {{ ($current_filters['id_kondisi'] ?? '') == $item->id ? 'selected' : '' }}>{{ $item->nama_kondisi }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Filter Lokasi:</label>
+                                                <select name="id_lokasi" class="form-select">
+                                                    <option value="">Semua Lokasi</option>
+                                                    @foreach($lokasi_list as $item)
+                                                        <option value="{{ $item->id }}" {{ ($current_filters['id_lokasi'] ?? '') == $item->id ? 'selected' : '' }}>{{ $item->nama_lokasi }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3 d-flex align-items-end">
+                                                <button type="submit" class="btn btn-primary me-2 w-100">Filter</button>
+                                                <a href="{{ route('barang.index') }}" class="btn btn-secondary w-100">Reset</a>
+                                            </div>
+                                        </div>
+                                    </form>
                                 </div>
-                            </form>
+                                {{-- Bagian Search (Kanan) --}}
+                                <div class="col-md-4">
+                                    <label for="keyword" class="form-label">Pencarian Cepat (Nama, Kode, Merk)</label>
+                                    <input type="text" class="form-control" placeholder="Mulai mengetik..." name="keyword" id="keyword" autocomplete="off">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -116,4 +117,42 @@
             </div>
         </div>
     </div>
+</x-app-layout>
+{{-- ... (Modal Error CSV jika ada) ... --}}
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+        // Script AJAX Search (Logika Aset Baru)
+        $('#keyword').on('keyup', function() {
+            let keyword = $(this).val();
+            
+            // Sembunyikan pagination jika user mulai mengetik
+            if (keyword.length > 0) {
+                $('.pagination').hide();
+            } else {
+                // Jika keyword kosong, refresh halaman untuk data asli (cara mudah)
+                window.location.href = '{{ route("barang.index") }}';
+                return;
+            }
+
+            $.ajax({
+                url: '{{ route("barang.cari") }}',
+                data: { 
+                    keyword: keyword,
+                    _token: '{{ csrf_token() }}' // Tambahkan CSRF token
+                },
+                method: 'post',
+                success: function(data) {
+                    $('#table-body').html(data);
+                },
+                error: function() {
+                    $('#table-body').html('<tr><td colspan="10" class="text-center text-danger">Terjadi error saat mencari...</td></tr>');
+                }
+            });
+        });
+    });
+</script>
+@endpush
+
 </x-app-layout>

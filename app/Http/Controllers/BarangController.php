@@ -12,7 +12,7 @@ use App\Models\LogAktivitas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-// Hapus 'StreamedResponse' karena ekspor dinonaktifkan
+use App\Jobs\ProcessAsetImport;
 
 class BarangController extends Controller
 {
@@ -212,32 +212,60 @@ class BarangController extends Controller
     }
 
     /**
-     * DINONAKTIFKAN SEMENTARA - Logika harus dirombak total
+     * Mencari aset untuk AJAX search (LOGIKA ASET BARU).
      */
     public function cari(Request $request)
     {
-        // Logika lama (berbasis 'jumlah') tidak valid lagi.
-        // Perlu ditulis ulang untuk mencari berdasarkan 'kode_barang', 'register', 'merk_type'
-        return response()->json(['error' => 'Fitur pencarian sedang dalam perbaikan.'], 500);
+        $keyword = $request->input('keyword');
+
+        // Cari berdasarkan: nama, kode, register, atau merk
+        $barang = Barang::with(['jenis', 'sumber', 'kondisi', 'lokasi', 'statusAset'])
+            ->where(function($query) use ($keyword) {
+                $query->where('nama_barang', 'LIKE', "%$keyword%")
+                      ->orWhere('kode_barang', 'LIKE', "%$keyword%")
+                      ->orWhere('register', 'LIKE', "%$keyword%")
+                      ->orWhere('merk_type', 'LIKE', "%$keyword%");
+            })
+            ->orderBy('nama_barang', 'asc')
+            ->get(); // Ambil sebagai Collection (bukan Paginator)
+
+        // Kembalikan view partial (body tabel)
+        // Pastikan nama file partial Anda benar
+        return view('barang._tabel_aset', ['barang' => $barang]);
     }
 
     /**
-     * DINONAKTIFKAN SEMENTARA
+     * Menampilkan form upload CSV.
      */
     public function importCsvForm()
     {
-        return redirect()->route('barang.index')
-                         ->with('error', 'Fitur Impor CSV sedang dalam perbaikan besar.');
+        return view('barang.import', [
+            'judul' => 'Import Aset dari CSV'
+        ]);
     }
 
     /**
-     * DINONAKTIFKAN SEMENTARA - Logika harus dirombak total
+     * Memproses file CSV yang di-upload (versi ASINKRON).
      */
     public function importCsv(Request $request)
     {
-        // Job ProcessCsvImport yang lama tidak valid.
+        $request->validate(['csv_file' => 'required|file|mimes:csv,txt']);
+
+        // 1. Simpan file ke storage (misal: storage/app/imports)
+        $path = $request->file('csv_file')->store('imports');
+
+        // 2. Dapatkan user yang sedang login
+        $user = Auth::user();
+
+        // 3. "Lempar" tugas ini ke background job
+        // Pastikan Anda sudah membuat file job baru (ProcessAsetImport)
+        // Jika file job Anda namanya masih ProcessCsvImport, gunakan itu
+        ProcessAsetImport::dispatch($path, $user); 
+        // ATAU: ProcessCsvImport::dispatch($path, $user);
+
+        // 4. Langsung kembalikan ke user tanpa menunggu
         return redirect()->route('barang.index')
-                         ->with('error', 'Fitur Impor CSV sedang dalam perbaikan besar.');
+                        ->with('success', 'Import Berhasil. Data sedang diproses di background dan akan segera muncul.');
     }
 
     /**
