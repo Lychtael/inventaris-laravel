@@ -11,29 +11,34 @@ class Barang extends Model
     
     protected $table = 'barang';
     
-    // Kita pakai timestamps() standar, bukan 'dibuat_pada' lagi
+    // Kita pakai timestamps() standar
     public $timestamps = true; 
 
     /**
-     * Kolom yang boleh diisi (sesuai migrasi baru)
-     * Kolom 'jumlah' dan 'satuan' HILANG
+     * Kolom yang boleh diisi (sesuai migrasi LENGKAP)
+     * Kita tambahkan 5 kolom baru di sini
      */
     protected $fillable = [
         'nama_barang', 
         'kode_barang', 
         'register', 
         'merk_type',
+        'nomor_spek',       // <-- KOLOM BARU
+        'bahan',            // <-- KOLOM BARU
         'tahun_pembelian',
+        'ukuran',           // <-- KOLOM BARU
+        'satuan',           // <-- KOLOM BARU (YANG KEMBALI)
         'harga',
         'keterangan',
         'id_jenis', 
         'id_sumber', 
         'id_kondisi',
         'id_lokasi',
+        'pengguna',         // <-- KOLOM BARU
         'id_status_aset'
     ];
 
-    // === RELASI BARU (BELONGS TO) ===
+    // === RELASI (BELONGS TO) ===
 
     public function jenis() {
         return $this->belongsTo(JenisBarang::class, 'id_jenis');

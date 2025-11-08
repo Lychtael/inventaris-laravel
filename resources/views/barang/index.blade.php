@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
 
@@ -89,19 +89,26 @@
                             <thead>
                                 <tr>
                                     <th>No</th>
-                                    <th>Nama Barang</th>
+                                    <th>Nama Barang / Jenis</th>
                                     <th>Kode Barang</th>
                                     <th>Register</th>
-                                    <th>Merk/Type</th>
+                                    <th>Merk / Type</th>
+                                    <th>No. Spek</th>
+                                    <th>Bahan</th>
                                     <th>Tahun</th>
+                                    <th>Ukuran</th>
+                                    <th>Satuan</th>
+                                    <th>Harga (Rp)</th>
                                     <th>Lokasi</th>
                                     <th>Kondisi</th>
                                     <th>Status</th>
+                                    <th>Pengguna</th>
+                                    <th>Keterangan</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="table-body">
-                                {{-- Kita panggil partial view baru --}}
+                                {{-- Pastikan nama file partial ini benar --}}
                                 @include('barang._tabel_aset', ['barang' => $barang])
                             </tbody>
                         </table>
@@ -115,42 +122,44 @@
             </div>
         </div>
     </div>
-</x-app-layout>
-{{-- ... (Modal Error CSV jika ada) ... --}}
 
-@push('scripts')
-<script>
-    $(document).ready(function() {
-        // Script AJAX Search (Logika Aset Baru)
-        $('#keyword').on('keyup', function() {
-            let keyword = $(this).val();
-            
-            // Sembunyikan pagination jika user mulai mengetik
-            if (keyword.length > 0) {
-                $('.pagination').hide();
-            } else {
-                // Jika keyword kosong, refresh halaman untuk data asli (cara mudah)
-                window.location.href = '{{ route("barang.index") }}';
-                return;
-            }
-
-            $.ajax({
-                url: '{{ route("barang.cari") }}',
-                data: { 
-                    keyword: keyword,
-                    _token: '{{ csrf_token() }}' // Tambahkan CSRF token
-                },
-                method: 'post',
-                success: function(data) {
-                    $('#table-body').html(data);
-                },
-                error: function() {
-                    $('#table-body').html('<tr><td colspan="10" class="text-center text-danger">Terjadi error saat mencari...</td></tr>');
+    {{-- ++ PINDAHKAN BLOK SCRIPT KE SINI ++ --}}
+    {{-- (DI DALAM <x-app-layout>, TAPI DI LUAR BLOK KONTEN UTAMA) --}}
+    @push('scripts')
+    <script>
+        $(document).ready(function() {
+            // Script AJAX Search (Logika Aset Baru)
+            $('#keyword').on('keyup', function() {
+                let keyword = $(this).val();
+                
+                // Sembunyikan pagination jika user mulai mengetik
+                if (keyword.length > 0) {
+                    $('.pagination').hide();
+                } else {
+                    // Jika keyword kosong, refresh halaman untuk data asli (cara mudah)
+                    window.location.href = '{{ route("barang.index") }}';
+                    return;
                 }
+
+                $.ajax({
+                    url: '{{ route("barang.cari") }}',
+                    data: { 
+                        keyword: keyword,
+                        _token: '{{ csrf_token() }}' // Tambahkan CSRF token
+                    },
+                    method: 'post',
+                    success: function(data) {
+                        $('#table-body').html(data);
+                    },
+                    error: function() {
+                        $('#table-body').html('<tr><td colspan="10" class="text-center text-danger">Terjadi error saat mencari...</td></tr>');
+                    }
+                });
             });
+
+            // (Script modal error CSV bisa ditambahkan di sini jika perlu)
         });
-    });
-</script>
-@endpush
+    </script>
+    @endpush
 
 </x-app-layout>
