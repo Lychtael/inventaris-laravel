@@ -55,7 +55,7 @@ class JenisBarangController extends Controller
     /**
      * Menampilkan form untuk mengedit jenis.
      */
-    public function edit(JenisBarang $jenisBarang)
+    public function edit(JenisBarang $jenisBarang) // Variabel $jenisBarang
     {
         return view('jenis-barang.edit', [
             'jenisBarang' => $jenisBarang,

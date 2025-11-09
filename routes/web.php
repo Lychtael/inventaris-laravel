@@ -45,21 +45,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // == RUTE KHUSUS ADMIN (id_peran = 1) ==
     Route::middleware(['cek.peran:1'])->group(function () {
 
-        // ++ TAMBAHKAN RUTE BARU INI ++
         Route::resource('dinas', DinasController::class);
-
         Route::resource('bidang', BidangController::class);
 
-        // Rute Jenis Barang (Ini masih rusak, nanti kita perbaiki)
+        // Rute Jenis Barang (CRUD Penuh)
         Route::resource('jenisbarang', JenisBarangController::class);
 
-        // Rute Sumber Barang (Ini masih rusak, nanti kita perbaiki)
+        // Rute Sumber Barang (CRUD Penuh)
         Route::resource('sumberbarang', SumberBarangController::class);
-
-        // Rute Log Aktivitas
+        
+        // (Rute StatusAset & Kondisi jika kita mau buat CRUD-nya)
         Route::get('/log', [LogController::class, 'index'])->name('log.index');
-
-        // (Rute Lokasi & Status Aset yang lama kita hapus dari sini, karena sudah tidak ada)
 
     });
 });

@@ -14,7 +14,7 @@
                         @csrf
                         <div class="mb-3">
                             <label for="nama_sumber" class="form-label">Nama Sumber</label>
-                            <input type.text" class="form-control @error('nama_sumber') is-invalid @enderror" 
+                            <input type="text" class="form-control @error('nama_sumber') is-invalid @enderror" 
                                    id="nama_sumber" name="nama_sumber" value="{{ old('nama_sumber') }}" required>
                             @error('nama_sumber') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>

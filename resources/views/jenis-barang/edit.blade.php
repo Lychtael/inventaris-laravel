@@ -15,7 +15,7 @@
                         @method('PUT')
                         <div class="mb-3">
                             <label for="nama_jenis" class="form-label">Nama Jenis</label>
-                            <input type.text" class="form-control @error('nama_jenis') is-invalid @enderror" 
+                            <input type="text" class="form-control @error('nama_jenis') is-invalid @enderror" 
                                    id="nama_jenis" name="nama_jenis" value="{{ old('nama_jenis', $jenisBarang->nama_jenis) }}" required>
                             @error('nama_jenis') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
