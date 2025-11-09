@@ -8,8 +8,8 @@ use App\Http\Controllers\JenisBarangController;
 use App\Http\Controllers\SumberBarangController;
 use App\Http\Controllers\PeminjamanController;
 use App\Http\Controllers\LogController;
-use App\Http\Controllers\LokasiController;
-use App\Http\Controllers\StatusAsetController;
+use App\Http\Controllers\DinasController;
+use App\Http\Controllers\BidangController;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -42,28 +42,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/peminjaman', [PeminjamanController::class, 'store'])->name('peminjaman.store');
     Route::post('/peminjaman/{peminjaman}/kembali', [PeminjamanController::class, 'kembali'])->name('peminjaman.kembali');
 
-
     // == RUTE KHUSUS ADMIN (id_peran = 1) ==
     Route::middleware(['cek.peran:1'])->group(function () {
 
-        // Rute Jenis Barang
+        // ++ TAMBAHKAN RUTE BARU INI ++
+        Route::resource('dinas', DinasController::class);
+
+        Route::resource('bidang', BidangController::class);
+
+        // Rute Jenis Barang (Ini masih rusak, nanti kita perbaiki)
         Route::resource('jenisbarang', JenisBarangController::class);
 
-        // Rute Sumber Barang
+        // Rute Sumber Barang (Ini masih rusak, nanti kita perbaiki)
         Route::resource('sumberbarang', SumberBarangController::class);
-
-        // Rute Lokasi
-        Route::resource('lokasi', LokasiController::class);
-
-        // ++ TAMBAHKAN RUTE BARU INI ++
-        Route::resource('status-aset', StatusAsetController::class);
 
         // Rute Log Aktivitas
         Route::get('/log', [LogController::class, 'index'])->name('log.index');
 
-        // ++ TAMBAHKAN RUTE BARU INI ++
-        Route::resource('lokasi', LokasiController::class);
-        // (Kita juga akan tambahkan 'status-aset' di sini nanti)
+        // (Rute Lokasi & Status Aset yang lama kita hapus dari sini, karena sudah tidak ada)
 
     });
 });

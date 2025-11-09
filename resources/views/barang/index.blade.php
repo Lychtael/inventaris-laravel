@@ -6,14 +6,14 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="mx-auto sm:px-6 lg:px-8">
+        {{-- Kita lebarkan kontainernya agar tabel muat --}}
+        <div class="max-w-screen-2xl mx-auto sm:px-6 lg:px-8"> 
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
 
                     <h3>{{ $judul ?? 'Daftar Aset Barang' }}</h3>
                     <hr class="my-3">
 
-                    
                     @if (session('success'))
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
                             {{ session('success') }}
@@ -29,58 +29,41 @@
 
                     <div class="d-flex justify-content-start mb-3">
                         <a href="{{ route('barang.create') }}" class="btn btn-success me-2">Tambah Aset Baru</a>
-                        <a href="{{ route('barang.exportCsv') }}" class="btn btn-primary me-2">Export ke CSV</a>
-                        <a href="{{ route('barang.importCsvForm') }}" class="btn btn-success me-2">Import dari CSV</a>
+                        {{-- (Tombol Impor/Ekspor masih nonaktif sampai Tahap 3) --}}
                     </div>
 
                     
                     <div class="card mb-3">
                         <div class="card-body">
-                            <div class="row align-items-end">
-                                {{-- Bagian Filter (Kiri) --}}
-                                <div class="col-md-8">
-                                    <form action="{{ route('barang.index') }}" method="get">
-                                        <div class="row align-items-end">
-                                            <div class="col-md-3">
-                                                <label class="form-label">Filter Jenis:</label>
-                                                <select name="id_jenis" class="form-select">
-                                                    <option value="">Semua Jenis</option>
-                                                    @foreach($jenis_list as $item)
-                                                        <option value="{{ $item->id }}" {{ ($current_filters['id_jenis'] ?? '') == $item->id ? 'selected' : '' }}>{{ $item->nama_jenis }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label class="form-label">Filter Kondisi:</label>
-                                                <select name="id_kondisi" class="form-select">
-                                                    <option value="">Semua Kondisi</option>
-                                                    @foreach($kondisi_list as $item)
-                                                        <option value="{{ $item->id }}" {{ ($current_filters['id_kondisi'] ?? '') == $item->id ? 'selected' : '' }}>{{ $item->nama_kondisi }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label class="form-label">Filter Lokasi:</label>
-                                                <select name="id_lokasi" class="form-select">
-                                                    <option value="">Semua Lokasi</option>
-                                                    @foreach($lokasi_list as $item)
-                                                        <option value="{{ $item->id }}" {{ ($current_filters['id_lokasi'] ?? '') == $item->id ? 'selected' : '' }}>{{ $item->nama_lokasi }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                            <div class="col-md-3 d-flex align-items-end">
-                                                <button type="submit" class="btn btn-primary me-2 w-100">Filter</button>
-                                                <a href="{{ route('barang.index') }}" class="btn btn-secondary w-100">Reset</a>
-                                            </div>
-                                        </div>
-                                    </form>
+                            <form action="{{ route('barang.index') }}" method="get">
+                                <div class="row align-items-end">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Filter Dinas:</label>
+                                        <select name="id_dinas" class="form-select">
+                                            <option value="">Semua Dinas</option>
+                                            @foreach($dinas_list as $item)
+                                                <option value="{{ $item->id }}" {{ ($current_filters['id_dinas'] ?? '') == $item->id ? 'selected' : '' }}>{{ $item->nama_dinas }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Filter Bidang:</label>
+                                        <select name="id_bidang" class="form-select">
+                                            <option value="">Semua Bidang</option>
+                                            @foreach($bidang_list as $item)
+                                                <option value="{{ $item->id }}" {{ ($current_filters['id_bidang'] ?? '') == $item->id ? 'selected' : '' }}>{{ $item->nama_bidang }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button type="submit" class="btn btn-primary me-2 w-100">Filter</button>
+                                        <a href="{{ route('barang.index') }}" class="btn btn-secondary w-100">Reset</a>
+                                    </div>
+                                    <div class="col-md-2">
+                                        {{-- (Search box nonaktif sampai Tahap 3) --}}
+                                    </div>
                                 </div>
-                                {{-- Bagian Search (Kanan) --}}
-                                <div class="col-md-4">
-                                    <label for="keyword" class="form-label">Pencarian Cepat (Nama, Kode, Merk)</label>
-                                    <input type="text" class="form-control" placeholder="Mulai mengetik..." name="keyword" id="keyword" autocomplete="off">
-                                </div>
-                            </div>
+                            </form>
                         </div>
                     </div>
 
@@ -90,6 +73,7 @@
                                 <tr>
                                     <th>No</th>
                                     <th>Nama Barang / Jenis</th>
+                                    <th>Dinas / Bidang</th>
                                     <th>Kode Barang</th>
                                     <th>Register</th>
                                     <th>Merk / Type</th>
@@ -99,7 +83,7 @@
                                     <th>Ukuran</th>
                                     <th>Satuan</th>
                                     <th>Harga (Rp)</th>
-                                    <th>Lokasi</th>
+                                    <th>Lokasi (Teks)</th>
                                     <th>Kondisi</th>
                                     <th>Status</th>
                                     <th>Pengguna</th>
@@ -108,7 +92,7 @@
                                 </tr>
                             </thead>
                             <tbody id="table-body">
-                                {{-- Pastikan nama file partial ini benar --}}
+                                {{-- Kita panggil partial view baru --}}
                                 @include('barang._tabel_aset', ['barang' => $barang])
                             </tbody>
                         </table>
@@ -122,44 +106,4 @@
             </div>
         </div>
     </div>
-
-    {{-- ++ PINDAHKAN BLOK SCRIPT KE SINI ++ --}}
-    {{-- (DI DALAM <x-app-layout>, TAPI DI LUAR BLOK KONTEN UTAMA) --}}
-    @push('scripts')
-    <script>
-        $(document).ready(function() {
-            // Script AJAX Search (Logika Aset Baru)
-            $('#keyword').on('keyup', function() {
-                let keyword = $(this).val();
-                
-                // Sembunyikan pagination jika user mulai mengetik
-                if (keyword.length > 0) {
-                    $('.pagination').hide();
-                } else {
-                    // Jika keyword kosong, refresh halaman untuk data asli (cara mudah)
-                    window.location.href = '{{ route("barang.index") }}';
-                    return;
-                }
-
-                $.ajax({
-                    url: '{{ route("barang.cari") }}',
-                    data: { 
-                        keyword: keyword,
-                        _token: '{{ csrf_token() }}' // Tambahkan CSRF token
-                    },
-                    method: 'post',
-                    success: function(data) {
-                        $('#table-body').html(data);
-                    },
-                    error: function() {
-                        $('#table-body').html('<tr><td colspan="10" class="text-center text-danger">Terjadi error saat mencari...</td></tr>');
-                    }
-                });
-            });
-
-            // (Script modal error CSV bisa ditambahkan di sini jika perlu)
-        });
-    </script>
-    @endpush
-
 </x-app-layout>

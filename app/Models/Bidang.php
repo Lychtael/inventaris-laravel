@@ -10,7 +10,7 @@ class Bidang extends Model
     use HasFactory;
     
     protected $table = 'bidang';
-    public $timestamps = true; // Sesuai migrasi baru
+    public $timestamps = true;
     protected $fillable = ['id_dinas', 'nama_bidang'];
 
     /**
@@ -19,5 +19,14 @@ class Bidang extends Model
     public function dinas()
     {
         return $this->belongsTo(Dinas::class, 'id_dinas');
+    }
+
+    /**
+     * ++ TAMBAHKAN RELASI INI ++
+     * Relasi: Satu Bidang memiliki banyak Barang
+     */
+    public function barang()
+    {
+        return $this->hasMany(Barang::class, 'id_bidang');
     }
 }

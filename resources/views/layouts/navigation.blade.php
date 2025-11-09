@@ -19,17 +19,17 @@
                         Data Peminjaman
                     </x-nav-link>
                     @if (Auth::user()->id_peran == 1)
+                        <x-nav-link :href="route('dinas.index')" :active="request()->routeIs('dinas.*')">
+                            Dinas
+                        </x-nav-link>
+                        <x-nav-link :href="route('bidang.index')" :active="request()->routeIs('bidang.*')">
+                            Bidang
+                        </x-nav-link>
                         <x-nav-link :href="route('jenisbarang.index')" :active="request()->routeIs('jenisbarang.*')">
                             Jenis Barang
                         </x-nav-link>
                         <x-nav-link :href="route('sumberbarang.index')" :active="request()->routeIs('sumberbarang.*')">
                             Sumber Barang
-                        </x-nav-link>
-                        <x-nav-link :href="route('lokasi.index')" :active="request()->routeIs('lokasi.*')">
-                            Lokasi
-                        </x-nav-link>
-                        <x-nav-link :href="route('status-aset.index')" :active="request()->routeIs('status-aset.*')">
-                            Status Aset
                         </x-nav-link>
                         <x-nav-link :href="route('log.index')" :active="request()->routeIs('log.index')">
                             Log Aktivitas
