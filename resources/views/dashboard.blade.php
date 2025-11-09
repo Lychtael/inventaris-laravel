@@ -17,8 +17,7 @@
     @endif
     
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">  
             <div class="row mb-4">
                 {{-- Total Barang Baik --}}
                 <div class="col-md-4">
@@ -87,7 +86,6 @@
         </div>
     </div>
 
-    {{-- PUSH SCRIPT UNTUK CHART.JS --}}
     @push('scripts')
         {{-- 1. Import Library Chart.js dari CDN --}}
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -97,18 +95,32 @@
             document.addEventListener('DOMContentLoaded', function () {
                 const ctx = document.getElementById('kondisiChart');
 
+                const labels = @json($chartLabels);
+                const data = @json($chartData);
+
+                const getColors = (labels) => {
+                    return labels.map(label => {
+                        if (label === 'Baik') {
+                            return 'rgb(22, 163, 74)'; // Hijau
+                        }
+                        if (label === 'KB') {
+                            return 'rgb(249, 115, 22)'; // Oranye
+                        }
+                        if (label === 'RB') {
+                            return 'rgb(220, 38, 38)'; // Merah
+                        }
+                        return 'rgb(107, 114, 128)'; // Abu-abu (default)
+                    });
+                };
+
                 new Chart(ctx, {
-                    type: 'pie', // Tipe grafik
+                    type: 'pie',
                     data: {
-                        labels: @json($chartLabels), // Label dari Controller
+                        labels: labels,
                         datasets: [{
-                            label: 'Jumlah Barang',
-                            data: @json($chartData), // Data dari Controller
-                            backgroundColor: [
-                                'rgb(22, 163, 74)',  // Hijau (Baik)
-                                'rgb(249, 115, 22)', // Oranye (Rusak Ringan)
-                                'rgb(220, 38, 38)'   // Merah (Rusak Berat)
-                            ],
+                            label: 'Jumlah Aset',
+                            data: data,
+                            backgroundColor: getColors(labels),
                             hoverOffset: 4
                         }]
                     },

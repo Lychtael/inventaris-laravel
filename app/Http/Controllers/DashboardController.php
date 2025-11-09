@@ -7,21 +7,21 @@ use App\Models\Barang;
 use App\Models\Peminjaman;
 use App\Models\LogAktivitas;
 use App\Models\Kondisi;
-use App\Models\StatusAset; // Kita pakai ini
+use App\Models\StatusAset;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     /**
-     * Menampilkan halaman dashboard dengan data statistik (LOGIKA ASET BARU).
+     * Menampilkan halaman dashboard (LOGIKA ASET BARU - FIX)
      */
     public function index()
     {
-        // === 1. AMBIL ID DATA MASTER ===
+        // === 1. AMBIL ID DATA MASTER (SESUAI CSV) ===
         
-        // Ambil ID untuk Kondisi "Baik", "Kurang Baik", "Rusak Berat"
-        $kondisiBaikId = Kondisi::where('nama_kondisi', 'Baik (B)')->value('id');
-        $kondisiRusakIds = Kondisi::where('nama_kondisi', '!=', 'Baik (B)')->pluck('id');
+        // Ambil ID untuk Kondisi "Baik", "KB", "RB"
+        $kondisiBaikId = Kondisi::where('nama_kondisi', 'Baik')->value('id');
+        $kondisiRusakIds = Kondisi::whereIn('nama_kondisi', ['KB', 'RB'])->pluck('id');
 
         // Ambil ID untuk Status "Dipinjam"
         $statusDipinjamId = StatusAset::where('nama_status', 'Dipinjam')->value('id');
@@ -34,9 +34,8 @@ class DashboardController extends Controller
 
         // Total Aset yang statusnya "Dipinjam"
         $totalDipinjam = Barang::where('id_status_aset', $statusDipinjamId)->count();
-        // (Alternatif: $totalDipinjam = Peminjaman::where('status_pinjam', 'Dipinjam')->count();)
         
-        // Total Aset yang kondisinya "Rusak" (Ringan + Berat)
+        // Total Aset yang kondisinya "Rusak" (KB + RB)
         $totalRusak = Barang::whereIn('id_kondisi', $kondisiRusakIds)->count();
 
         
