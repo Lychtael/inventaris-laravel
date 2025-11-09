@@ -11,7 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // === TABEL PENGGUNA & PERAN (SAMA SEPERTI SEBELUMNYA) ===
+        // === 1. TABEL MASTER (GRUP 1: DROPDOWN) ===
+        
+        // Tabel Peran (Untuk Admin/User)
         Schema::create('peran', function (Blueprint $table) {
             $table->id();
             $table->string('nama_peran', 50)->unique();
@@ -23,7 +25,22 @@ return new class extends Migration
             $table->foreignId('id_peran')->after('id')->default(1)->constrained('peran');
         });
 
-        // === TABEL MASTER INVENTARIS (SESUAI CSV) ===
+        // Tabel Master Dinas (BARU)
+        Schema::create('dinas', function (Blueprint $table) {
+            $table->id();
+            $table->string('nama_dinas', 150)->unique();
+            $table->timestamps();
+        });
+
+        // Tabel Master Bidang (BARU, terhubung ke Dinas)
+        Schema::create('bidang', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('id_dinas')->constrained('dinas');
+            $table->string('nama_bidang', 150);
+            $table->timestamps();
+        });
+
+        // Tabel Master Kategori Aset (Dropdown)
         Schema::create('jenis_barang', function (Blueprint $table) {
             $table->id();
             $table->string('nama_jenis', 100)->unique();
@@ -32,59 +49,62 @@ return new class extends Migration
 
         Schema::create('sumber_barang', function (Blueprint $table) {
             $table->id();
-            $table->string('nama_sumber', 100)->unique(); // Sesuai "Asal/Cara Perolehan"
+            $table->string('nama_sumber', 100)->unique(); // Asal Perolehan
             $table->timestamps();
         });
 
         Schema::create('kondisi', function (Blueprint $table) {
             $table->id();
-            $table->string('nama_kondisi', 50)->unique(); // B, KB, RB
+            $table->string('nama_kondisi', 50)->unique(); // B/KB/RB
             $table->timestamps();
         });
 
-        Schema::create('lokasi', function (Blueprint $table) {
-            $table->id();
-            $table->string('nama_lokasi', 100)->unique(); // Sesuai "Lokasi"
-            $table->string('penanggung_jawab')->nullable(); // Sesuai "Penanggung Jawab Ruangan"
-            $table->timestamps();
-        });
-
+        // Tabel Status (Logika Inti: Tersedia, Dipinjam, Hilang)
         Schema::create('status_aset', function (Blueprint $table) {
             $table->id();
-            $table->string('nama_status', 50)->unique(); // Sesuai "Status" (Hilang, Tersedia, Dipinjam, Dihapuskan)
+            $table->string('nama_status', 50)->unique(); 
             $table->timestamps();
         });
 
-        // === TABEL UTAMA: BARANG (SEKARANG MENJADI ASET) ===
+        // === 2. TABEL UTAMA: ASET (BARANG) ===
+        // Sesuai 100% dengan CSV + Desain Hybrid-mu
         Schema::create('barang', function (Blueprint $table) {
             $table->id();
-            $table->string('nama_barang'); // Sesuai "Nama / Jenis Barang"
-            $table->string('kode_barang')->nullable(); // Sesuai "Kode Barang"
-            $table->string('register')->nullable(); // Sesuai "Register"
             
-            $table->string('merk_type')->nullable(); // Sesuai "Merk/Type"
-            $table->year('tahun_pembelian')->nullable(); // Sesuai "Tahun Pembelian"
-            $table->decimal('harga', 15, 2)->nullable()->default(0); // Sesuai "Harga"
-            $table->text('keterangan')->nullable();
-            
-            // Foreign Keys ke Tabel Master
+            // GRUP 1: Relasi (Dropdown)
+            $table->foreignId('id_dinas')->nullable()->constrained('dinas');
+            $table->foreignId('id_bidang')->nullable()->constrained('bidang');
             $table->foreignId('id_jenis')->nullable()->constrained('jenis_barang');
             $table->foreignId('id_sumber')->nullable()->constrained('sumber_barang');
             $table->foreignId('id_kondisi')->nullable()->constrained('kondisi');
-            $table->foreignId('id_lokasi')->nullable()->constrained('lokasi');
             $table->foreignId('id_status_aset')->nullable()->constrained('status_aset');
 
-            $table->timestamps(); // Menggantikan 'dibuat_pada'
+            // GRUP 2: Data Unik (Input Manual Teks)
+            $table->string('nama_barang'); // (Nama / Jenis Barang)
+            $table->string('kode_barang')->nullable();
+            $table->string('register')->nullable();
+            $table->string('merk_type')->nullable();
+            $table->string('nomor_spek')->nullable(); // (No. Sertifikat/Pabrik/dll)
+            $table->string('bahan')->nullable();
+            $table->string('ukuran')->nullable(); // (P, S, D)
+            $table->string('satuan')->nullable();
+            $table->string('lokasi')->nullable(); // (Kolom Teks Biasa)
+            $table->string('pengguna')->nullable();
+            $table->text('keterangan')->nullable();
+
+            // GRUP 3: Data Unik (Input Manual Angka)
+            $table->year('tahun_pembelian')->nullable();
+            $table->decimal('harga', 15, 2)->nullable()->default(0);
+
+            $table->timestamps();
         });
 
-        // === TABEL TRANSAKSI: PEMINJAMAN (LOGIKA BARU) ===
+        // === 3. TABEL TRANSAKSI (Peminjaman & Log) ===
         Schema::create('peminjaman', function (Blueprint $table) {
             $table->id();
-            // Tidak perlu 'jumlah' karena kita meminjam 1 unit aset
             $table->foreignId('id_barang')->constrained('barang'); // ID Aset yang dipinjam
-            $table->foreignId('id_user_peminjam')->nullable()->constrained('users'); // Jika peminjam adalah user internal
-            $table->string('peminjam_eksternal')->nullable(); // Jika peminjam orang luar
-            
+            $table->foreignId('id_user_peminjam')->nullable()->constrained('users'); 
+            $table->string('peminjam_eksternal')->nullable(); 
             $table->date('tanggal_pinjam');
             $table->date('tanggal_kembali')->nullable();
             $table->text('keterangan')->nullable();
@@ -92,7 +112,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // === TABEL LOG (SAMA SEPERTI SEBELUMNYA) ===
         Schema::create('log_aktivitas', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_pengguna')->nullable()->constrained('users');
@@ -113,12 +132,12 @@ return new class extends Migration
         Schema::dropIfExists('peminjaman');
         Schema::dropIfExists('barang');
         Schema::dropIfExists('status_aset');
-        Schema::dropIfExists('lokasi');
         Schema::dropIfExists('kondisi');
         Schema::dropIfExists('sumber_barang');
         Schema::dropIfExists('jenis_barang');
+        Schema::dropIfExists('bidang');
+        Schema::dropIfExists('dinas');
         
-        // Hapus foreign key 'id_peran' dari 'users'
         Schema::table('users', function (Blueprint $table) {
             $table->dropForeign(['id_peran']);
             $table->dropColumn('id_peran');

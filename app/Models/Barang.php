@@ -11,34 +11,49 @@ class Barang extends Model
     
     protected $table = 'barang';
     
-    // Kita pakai timestamps() standar
+    // Kita pakai timestamps() standar, bukan 'dibuat_pada' lagi
     public $timestamps = true; 
 
     /**
      * Kolom yang boleh diisi (sesuai migrasi LENGKAP)
-     * Kita tambahkan 5 kolom baru di sini
+     * Sesuai analisismu: (Grup 1 Dropdown, Grup 2 Manual)
      */
     protected $fillable = [
+        // GRUP 1: Relasi (Dropdown)
+        'id_dinas',
+        'id_bidang',
+        'id_jenis', 
+        'id_sumber', 
+        'id_kondisi',
+        'id_status_aset',
+        
+        // GRUP 2: Data Unik (Input Manual Teks)
         'nama_barang', 
         'kode_barang', 
         'register', 
         'merk_type',
-        'nomor_spek',       // <-- KOLOM BARU
-        'bahan',            // <-- KOLOM BARU
-        'tahun_pembelian',
-        'ukuran',           // <-- KOLOM BARU
-        'satuan',           // <-- KOLOM BARU (YANG KEMBALI)
-        'harga',
+        'nomor_spek',
+        'bahan',
+        'ukuran',
+        'satuan',
+        'lokasi', // (Kolom Teks Biasa)
+        'pengguna',
         'keterangan',
-        'id_jenis', 
-        'id_sumber', 
-        'id_kondisi',
-        'id_lokasi',
-        'pengguna',         // <-- KOLOM BARU
-        'id_status_aset'
+
+        // GRUP 3: Data Unik (Input Manual Angka)
+        'tahun_pembelian',
+        'harga',
     ];
 
-    // === RELASI (BELONGS TO) ===
+    // === RELASI BARU (BELONGS TO) ===
+
+    public function dinas() {
+        return $this->belongsTo(Dinas::class, 'id_dinas');
+    }
+
+    public function bidang() {
+        return $this->belongsTo(Bidang::class, 'id_bidang');
+    }
 
     public function jenis() {
         return $this->belongsTo(JenisBarang::class, 'id_jenis');
@@ -50,10 +65,6 @@ class Barang extends Model
     
     public function kondisi() {
         return $this->belongsTo(Kondisi::class, 'id_kondisi');
-    }
-
-    public function lokasi() {
-        return $this->belongsTo(Lokasi::class, 'id_lokasi');
     }
 
     public function statusAset() {
