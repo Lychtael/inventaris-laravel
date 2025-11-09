@@ -6,8 +6,7 @@
     </x-slot>
 
     <div class="py-12">
-        {{-- Kita lebarkan kontainernya agar tabel muat --}}
-        <div class="max-w-screen-2xl mx-auto sm:px-6 lg:px-8"> 
+        <div class="mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
 
@@ -29,7 +28,9 @@
 
                     <div class="d-flex justify-content-start mb-3">
                         <a href="{{ route('barang.create') }}" class="btn btn-success me-2">Tambah Aset Baru</a>
-                        {{-- (Tombol Impor/Ekspor masih nonaktif sampai Tahap 3) --}}
+                        {{-- (Tombol Ekspor masih nonaktif) --}}
+                        {{-- <a href="{{ route('barang.exportCsv') }}" class="btn btn-primary me-2">Export ke CSV</a> --}}
+                        <a href="{{ route('barang.importCsvForm') }}" class="btn btn-success me-2">Import dari CSV</a>
                     </div>
 
                     

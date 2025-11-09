@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        <h2 class="font-semibold text-xl text-white leading-tight">
             {{ __('Dashboard') }}
         </h2>
     </x-slot>
@@ -17,15 +17,55 @@
     @endif
     
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">  
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            
+            {{-- === 0. FILTER DINAS/BIDANG (ALUR DRILL-DOWN) === --}}
+            @if (Auth::user()->id_peran == 1) {{-- Hanya Admin (BMD) yang bisa filter --}}
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Filter Dashboard</h5>
+                    <p class="card-text">Tampilkan statistik untuk Dinas atau Bidang tertentu.</p>
+                    <form action="{{ route('dashboard') }}" method="GET">
+                        <div class="row align-items-end">
+                            <div class="col-md-5">
+                                <label for="id_dinas" class="form-label">Pilih Dinas</label>
+                                <select class="form-select" id="id_dinas" name="id_dinas" onchange="this.form.submit()">
+                                    <option value="">-- Tampilkan Semua Dinas --</option>
+                                    @foreach ($dinasList as $dinas)
+                                        <option value="{{ $dinas->id }}" @selected($selectedDinasId == $dinas->id)>
+                                            {{ $dinas->nama_dinas }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <label for="id_bidang" class="form-label">Pilih Bidang</label>
+                                <select class="form-select" id="id_bidang" name="id_bidang" onchange="this.form.submit()">
+                                    <option value="">-- Tampilkan Semua Bidang (dari Dinas terpilih) --</option>
+                                    @foreach ($bidangList as $bidang)
+                                        <option value="{{ $bidang->id }}" @selected($selectedBidangId == $bidang->id)>
+                                            {{ $bidang->nama_bidang }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <a href="{{ route('dashboard') }}" class="btn btn-secondary w-100">Reset</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            @endif
+            
             <div class="row mb-4">
                 {{-- Total Barang Baik --}}
                 <div class="col-md-4">
                     <div class="card shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title text-success">Total Barang (Kondisi Baik)</h5>
+                            <h5 class="card-title text-success">Total Aset (Kondisi Baik)</h5>
                             <p class="card-text fs-3 fw-bold">{{ $totalBarangBaik ?? 0 }}</p>
-                            <small class="text-muted">Jumlah barang yang siap dipinjam</small>
+                            <small class="text-muted">Jumlah unit aset "Baik (B)"</small>
                         </div>
                     </div>
                 </div>
@@ -33,9 +73,9 @@
                 <div class="col-md-4">
                     <div class="card shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title text-warning">Total Barang Dipinjam</h5>
+                            <h5 class="card-title text-warning">Total Aset Dipinjam</h5>
                             <p class="card-text fs-3 fw-bold">{{ $totalDipinjam ?? 0 }}</p>
-                            <small class="text-muted">Barang yang sedang tidak ada di stok</small>
+                            <small class="text-muted">Aset dengan status "Dipinjam"</small>
                         </div>
                     </div>
                 </div>
@@ -43,9 +83,9 @@
                 <div class="col-md-4">
                     <div class="card shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title text-danger">Total Barang Rusak</h5>
+                            <h5 class="card-title text-danger">Total Aset Rusak</h5>
                             <p class="card-text fs-3 fw-bold">{{ $totalRusak ?? 0 }}</p>
-                            <small class="text-muted">Rusak Ringan + Rusak Berat</small>
+                            <small class="text-muted">Kondisi "Kurang Baik (KB)" + "Rusak Berat (RB)"</small>
                         </div>
                     </div>
                 </div>
@@ -56,7 +96,7 @@
                 <div class="col-md-6 mb-4">
                     <div class="card shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title">Grafik Kondisi Barang</h5>
+                            <h5 class="card-title">Grafik Kondisi Aset</h5>
                             <canvas id="kondisiChart" height="200"></canvas>
                         </div>
                     </div>
@@ -66,7 +106,7 @@
                 <div class="col-md-6 mb-4">
                     <div class="card shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title">Log Aktivitas Terbaru</h5>
+                            <h5 class="card-title">Log Aktivitas Terbaru (Global)</h5>
                             <ul class="list-group list-group-flush">
                                 @forelse ($logAktivitas as $log)
                                     <li class="list-group-item">
@@ -86,6 +126,7 @@
         </div>
     </div>
 
+    {{-- PUSH SCRIPT UNTUK CHART.JS --}}
     @push('scripts')
         {{-- 1. Import Library Chart.js dari CDN --}}
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -94,19 +135,21 @@
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 const ctx = document.getElementById('kondisiChart');
-
+                
+                // Ambil data dari PHP
                 const labels = @json($chartLabels);
                 const data = @json($chartData);
 
+                // Fungsi untuk memetakan label ke warna (sesuai Seeder CSV)
                 const getColors = (labels) => {
                     return labels.map(label => {
-                        if (label === 'Baik') {
+                        if (label === 'Baik (B)' || label === 'Baik') {
                             return 'rgb(22, 163, 74)'; // Hijau
                         }
-                        if (label === 'KB') {
+                        if (label === 'Kurang Baik (KB)' || label === 'KB') {
                             return 'rgb(249, 115, 22)'; // Oranye
                         }
-                        if (label === 'RB') {
+                        if (label === 'Rusak Berat (RB)' || label === 'RB') {
                             return 'rgb(220, 38, 38)'; // Merah
                         }
                         return 'rgb(107, 114, 128)'; // Abu-abu (default)
@@ -114,13 +157,13 @@
                 };
 
                 new Chart(ctx, {
-                    type: 'pie',
+                    type: 'pie', // Tipe grafik
                     data: {
-                        labels: labels,
+                        labels: labels, // Label dari const
                         datasets: [{
                             label: 'Jumlah Aset',
-                            data: data,
-                            backgroundColor: getColors(labels),
+                            data: data, // Data dari const
+                            backgroundColor: getColors(labels), // Panggil fungsi warna
                             hoverOffset: 4
                         }]
                     },

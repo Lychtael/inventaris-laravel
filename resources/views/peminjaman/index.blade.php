@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
 
@@ -30,6 +30,7 @@
                         <a href="{{ route('peminjaman.create') }}" class="btn btn-success me-2">Catat Peminjaman Baru</a>
                     </div>
 
+                    <div class="table-responsive">
                         <table class="table table-bordered table-striped">
                             <thead>
                                 <tr>
@@ -47,7 +48,7 @@
                             <tbody>
                                 @forelse ($peminjaman as $item)
                                 <tr>
-                                    <td>{{ $loop->iteration }}</td>
+                                    <td>{{ $loop->iteration + ($peminjaman->currentPage() - 1) * $peminjaman->perPage() }}</td>
                                     <td>{{ $item->barang->nama_barang ?? 'Aset Dihapus' }}</td>
                                     <td>{{ $item->barang->register ?? 'N/A' }}</td>
                                     <td>{{ $item->barang->merk_type ?? 'N/A' }}</td>
@@ -86,8 +87,12 @@
                             </tbody>
                         </table>
                     </div>
+                    
+                    <div class="mt-3">
+                        {{ $peminjaman->links() }}
+                    </div>
 
-                </div>w
+                </div>
             </div>
         </div>
     </div>

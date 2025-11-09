@@ -32,7 +32,7 @@ class PeminjamanController extends Controller
         $peminjaman = Peminjaman::with(['barang', 'userPeminjam']) // Eager load relasi baru
                                 ->orderBy('tanggal_pinjam', 'desc')
                                 ->orderBy('status_pinjam', 'asc')
-                                ->get();
+                                ->paginate(25); // Tambahkan pagination
 
         return view('peminjaman.index', [
             'peminjaman' => $peminjaman,
@@ -47,6 +47,7 @@ class PeminjamanController extends Controller
     {
         // Ambil HANYA barang yang statusnya "Tersedia"
         $barangTersedia = Barang::where('id_status_aset', $this->statusTersediaId)
+                                ->with(['dinas', 'bidang']) // Ambil relasi dinas/bidang
                                 ->orderBy('nama_barang', 'asc')
                                 ->get();
         

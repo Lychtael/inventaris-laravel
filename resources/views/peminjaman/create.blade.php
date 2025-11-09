@@ -29,7 +29,7 @@
                                 <option value="">-- Pilih Aset --</option>
                                 @forelse ($barang as $item)
                                     <option value="{{ $item->id }}" {{ old('id_barang') == $item->id ? 'selected' : '' }}>
-                                        {{ $item->nama_barang }} (Register: {{ $item->register }}) (Merk: {{ $item->merk_type }})
+                                        {{ $item->nama_barang }} (Reg: {{ $item->register }}) (Bidang: {{ $item->bidang->nama_bidang ?? 'N/A' }})
                                     </option>
                                 @empty
                                     <option value="" disabled>Tidak ada aset yang tersedia untuk dipinjam.</option>

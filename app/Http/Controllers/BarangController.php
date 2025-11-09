@@ -12,6 +12,8 @@ use App\Models\StatusAset;
 use App\Models\LogAktivitas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Jobs\ProcessAsetImport; 
+use Illuminate\Support\Facades\Storage;
 
 class BarangController extends Controller
 {
@@ -226,6 +228,45 @@ class BarangController extends Controller
         }
     }
     
-    // (Method cari, importCsvForm, importCsv, exportCsv kita biarkan rusak dulu
-    // sampai kita masuk ke Tahap 3: Perombakan Fitur Inti)
+    /**
+     * Menampilkan form upload CSV (LOGIKA BARU DENGAN FILTER DINAS/BIDANG).
+     */
+    public function importCsvForm()
+    {
+        return view('barang.import', [
+            'dinas' => Dinas::orderBy('nama_dinas', 'asc')->get(),
+            'bidang' => Bidang::orderBy('nama_bidang', 'asc')->get(),
+            'judul' => 'Import Aset dari CSV'
+        ]);
+    }
+    /**
+     * Memproses file CSV yang di-upload (LOGIKA BARU DENGAN DINAS/BIDANG).
+     */
+    public function importCsv(Request $request)
+    {
+        // 1. Validasi file DAN dropdown
+        $validated = $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt,xlsx,xls',
+            'id_dinas' => 'required|exists:dinas,id',
+            'id_bidang' => 'required|exists:bidang,id',
+        ]);
+
+        // 2. Simpan file ke storage
+        $path = $request->file('csv_file')->store('imports');
+
+        // 3. Dapatkan user yang sedang login
+        $user = Auth::user();
+
+        // 4. "Lempar" tugas ini ke background job DENGAN data Dinas/Bidang
+        ProcessAsetImport::dispatch(
+            $path, 
+            $user,
+            $validated['id_dinas'],
+            $validated['id_bidang']
+        ); 
+
+        // 5. Langsung kembalikan ke user tanpa menunggu
+        return redirect()->route('barang.index')
+                        ->with('success', 'Import Berhasil. Data sedang diproses di background dan akan segera muncul.');
+    }
 }
