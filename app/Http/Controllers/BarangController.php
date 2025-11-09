@@ -351,4 +351,26 @@ class BarangController extends Controller
         // Kembalikan response sebagai file download
         return new StreamedResponse($callback, 200, $headers);
     }
+    /**
+     * Mencari aset untuk AJAX search (LOGIKA ASET BARU).
+     */
+    public function cari(Request $request)
+    {
+        $keyword = $request->input('keyword');
+
+        // Cari berdasarkan: nama, kode, register, atau merk
+        $barang = Barang::with(['dinas', 'bidang', 'jenis', 'sumber', 'kondisi', 'statusAset'])
+            ->where(function($query) use ($keyword) {
+                $query->where('nama_barang', 'LIKE', "%$keyword%")
+                      ->orWhere('kode_barang', 'LIKE', "%$keyword%")
+                      ->orWhere('register', 'LIKE', "%$keyword%")
+                      ->orWhere('merk_type', 'LIKE', "%$keyword%");
+            })
+            ->orderBy('nama_barang', 'asc')
+            ->get(); // Ambil sebagai Collection (bukan Paginator)
+
+        // Kembalikan view partial (body tabel)
+        // PASTIKAN NAMA FILE INI BENAR (sesuai yang kita buat di Tahap 2)
+        return view('barang._tabel_aset', ['barang' => $barang]);
+    }
 }

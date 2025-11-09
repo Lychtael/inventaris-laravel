@@ -35,35 +35,44 @@
                     
                     <div class="card mb-3">
                         <div class="card-body">
-                            <form action="{{ route('barang.index') }}" method="get">
-                                <div class="row align-items-end">
-                                    <div class="col-md-4">
-                                        <label class="form-label">Filter Dinas:</label>
-                                        <select name="id_dinas" class="form-select">
-                                            <option value="">Semua Dinas</option>
-                                            @foreach($dinas_list as $item)
-                                                <option value="{{ $item->id }}" {{ ($current_filters['id_dinas'] ?? '') == $item->id ? 'selected' : '' }}>{{ $item->nama_dinas }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Filter Bidang:</label>
-                                        <select name="id_bidang" class="form-select">
-                                            <option value="">Semua Bidang</option>
-                                            @foreach($bidang_list as $item)
-                                                <option value="{{ $item->id }}" {{ ($current_filters['id_bidang'] ?? '') == $item->id ? 'selected' : '' }}>{{ $item->nama_bidang }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2 d-flex align-items-end">
-                                        <button type="submit" class="btn btn-primary me-2 w-100">Filter</button>
-                                        <a href="{{ route('barang.index') }}" class="btn btn-secondary w-100">Reset</a>
-                                    </div>
-                                    <div class="col-md-2">
-                                        {{-- (Search box nonaktif sampai Tahap 3) --}}
-                                    </div>
+                            {{-- PERUBAHAN BESAR ADA DI BLOK INI --}}
+                            <div class="row align-items-end">
+                                {{-- Bagian Filter (Kiri) --}}
+                                <div class="col-md-8">
+                                    <form action="{{ route('barang.index') }}" method="get">
+                                        <div class="row align-items-end">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Filter Dinas:</label>
+                                                <select name="id_dinas" class="form-select">
+                                                    <option value="">Semua Dinas</option>
+                                                    @foreach($dinas_list as $item)
+                                                        <option value="{{ $item->id }}" {{ ($current_filters['id_dinas'] ?? '') == $item->id ? 'selected' : '' }}>{{ $item->nama_dinas }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Filter Bidang:</label>
+                                                <select name="id_bidang" class="form-select">
+                                                    <option value="">Semua Bidang</option>
+                                                    @foreach($bidang_list as $item)
+                                                        <option value="{{ $item->id }}" {{ ($current_filters['id_bidang'] ?? '') == $item->id ? 'selected' : '' }}>{{ $item->nama_bidang }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4 d-flex align-items-end">
+                                                <button type="submit" class="btn btn-primary me-2 w-100">Filter</button>
+                                                <a href="{{ route('barang.index') }}" class="btn btn-secondary w-100">Reset</a>
+                                            </div>
+                                        </div>
+                                    </form>
                                 </div>
-                            </form>
+                                {{-- Bagian Search (Kanan) --}}
+                                <div class="col-md-4">
+                                    <label for="keyword" class="form-label">Pencarian Cepat (Nama, Kode, Merk)</label>
+                                    <input type="text" class="form-control" placeholder="Mulai mengetik..." name="keyword" id="keyword" autocomplete="off">
+                                </div>
+                            </div>
+                            {{-- BATAS PERUBAHAN --}}
                         </div>
                     </div>
 
@@ -92,7 +101,7 @@
                                 </tr>
                             </thead>
                             <tbody id="table-body">
-                                {{-- Kita panggil partial view baru --}}
+                                {{-- Pastikan nama file partial ini benar --}}
                                 @include('barang._tabel_aset', ['barang' => $barang])
                             </tbody>
                         </table>
@@ -106,4 +115,42 @@
             </div>
         </div>
     </div>
+
+    {{-- TAMBAHKAN BLOK SCRIPT INI DI SINI (DI DALAM <x-app-layout>) --}}
+    @push('scripts')
+    <script>
+        $(document).ready(function() {
+            // Script AJAX Search (Logika Aset Baru)
+            $('#keyword').on('keyup', function() {
+                let keyword = $(this).val();
+                
+                // Sembunyikan pagination jika user mulai mengetik
+                if (keyword.length > 0) {
+                    $('.pagination').hide();
+                } else {
+                    // Jika keyword kosong, refresh halaman untuk data asli (cara mudah)
+                    window.location.href = '{{ route("barang.index") }}';
+                    return;
+                }
+
+                $.ajax({
+                    url: '{{ route("barang.cari") }}',
+                    data: { 
+                        keyword: keyword,
+                        _token: '{{ csrf_token() }}' // Tambahkan CSRF token
+                    },
+                    method: 'post',
+                    success: function(data) {
+                        $('#table-body').html(data);
+                    },
+                    error: function() {
+                        // Pastikan colspan-nya 18
+                        $('#table-body').html('<tr><td colspan="18" class="text-center text-danger">Terjadi error saat mencari...</td></tr>');
+                    }
+                });
+            });
+        });
+    </script>
+    @endpush
+
 </x-app-layout>

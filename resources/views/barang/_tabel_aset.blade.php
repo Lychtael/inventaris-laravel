@@ -1,12 +1,18 @@
 {{-- 
 File: resources/views/barang/_tabel_aset.blade.php
-(Versi Lengkap 18 Kolom)
+(Versi FINAL DENGAN FIX PAGINASI)
 --}}
 
 @forelse ($barang as $brg)
 <tr>
-    {{-- 1. Nomor --}}
-    <td>{{ $loop->iteration + ($barang->currentPage() - 1) * $barang->perPage() }}</td>
+    {{-- 1. Nomor (FIX ADA DI SINI) --}}
+    @if ($barang instanceof \Illuminate\Pagination\LengthAwarePaginator)
+        {{-- Jika ini dari Paginator (load halaman) --}}
+        <td>{{ $loop->iteration + ($barang->currentPage() - 1) * $barang->perPage() }}</td>
+    @else
+        {{-- Jika ini dari Collection (hasil search AJAX) --}}
+        <td>{{ $loop->iteration }}</td>
+    @endif
     
     {{-- 2. Nama Barang --}}
     <td>{{ $brg->nama_barang }}</td>
@@ -63,13 +69,12 @@ File: resources/views/barang/_tabel_aset.blade.php
         <form action="{{ route('barang.destroy', $brg->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin hapus aset ini?');">
             @csrf
             @method('DELETE')
-            <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+            <button typeD="submit" class="btn btn-sm btn-danger">Hapus</button>
         </form>
     </td>
 </tr>
 @empty
 <tr>
-    {{-- (Pastikan colspan-nya 18, sesuai jumlah <th> baru) --}}
     <td colspan="18" class="text-center">Data aset tidak ditemukan.</td>
 </tr>
 @endforelse
