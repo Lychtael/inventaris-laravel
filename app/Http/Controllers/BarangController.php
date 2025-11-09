@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Jobs\ProcessAsetImport; 
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BarangController extends Controller
 {
@@ -268,5 +269,86 @@ class BarangController extends Controller
         // 5. Langsung kembalikan ke user tanpa menunggu
         return redirect()->route('barang.index')
                         ->with('success', 'Import Berhasil. Data sedang diproses di background dan akan segera muncul.');
+    }
+    /**
+     * Mengekspor data aset ke file CSV (LOGIKA ASET BARU DENGAN FILTER).
+     */
+    public function exportCsv(Request $request) // Tambahkan Request $request
+    {
+        $fileName = 'data_aset_inventaris_' . date('Y-m-d') . '.csv';
+
+        // Ambil query dasar, SAMA PERSIS DENGAN METHOD INDEX()
+        $query = Barang::with(['dinas', 'bidang', 'jenis', 'sumber', 'kondisi', 'statusAset']);
+
+        // Terapkan filter Dinas/Bidang (SAMA PERSIS DENGAN METHOD INDEX())
+        if ($request->filled('id_dinas')) {
+            $query->where('id_dinas', $request->id_dinas);
+        }
+        if ($request->filled('id_bidang')) {
+            $query->where('id_bidang', $request->id_bidang);
+        }
+        
+        $data_barang = $query->orderBy('id', 'asc')->get(); // Ambil semua data yang terfilter
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ];
+
+        $callback = function() use ($data_barang) {
+            $output = fopen('php://output', 'w');
+            
+            // Tulis Header Kolom (SESUAI TABEL LENGKAP KITA)
+            fputcsv($output, [
+                'ID',
+                'Nama Barang / Jenis',
+                'Dinas Pemilik',
+                'Bidang Pemilik',
+                'Kode Barang',
+                'Register',
+                'Merk / Type',
+                'No. Spek (Sertifikat/Pabrik/Dll)',
+                'Bahan',
+                'Tahun Pembelian',
+                'Ukuran (P,S,D)',
+                'Satuan',
+                'Harga (Rp)',
+                'Lokasi (Teks)',
+                'Kondisi',
+                'Status Aset',
+                'Pengguna',
+                'Keterangan',
+                'Tgl Input',
+            ]);
+
+            // Tulis Data Aset
+            foreach ($data_barang as $barang) {
+                fputcsv($output, [
+                    $barang->id,
+                    $barang->nama_barang,
+                    $barang->dinas->nama_dinas ?? 'N/A',
+                    $barang->bidang->nama_bidang ?? 'N/A',
+                    $barang->kode_barang,
+                    $barang->register,
+                    $barang->merk_type,
+                    $barang->nomor_spek,
+                    $barang->bahan,
+                    $barang->tahun_pembelian,
+                    $barang->ukuran,
+                    $barang->satuan,
+                    $barang->harga,
+                    $barang->lokasi,
+                    $barang->kondisi->nama_kondisi ?? 'N/A',
+                    $barang->statusAset->nama_status ?? 'N/A',
+                    $barang->pengguna,
+                    $barang->keterangan,
+                    $barang->created_at->format('Y-m-d'),
+                ]);
+            }
+            fclose($output);
+        };
+
+        // Kembalikan response sebagai file download
+        return new StreamedResponse($callback, 200, $headers);
     }
 }

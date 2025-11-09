@@ -28,9 +28,8 @@
 
                     <div class="d-flex justify-content-start mb-3">
                         <a href="{{ route('barang.create') }}" class="btn btn-success me-2">Tambah Aset Baru</a>
-                        {{-- (Tombol Ekspor masih nonaktif) --}}
-                        {{-- <a href="{{ route('barang.exportCsv') }}" class="btn btn-primary me-2">Export ke CSV</a> --}}
-                        <a href="{{ route('barang.importCsvForm') }}" class="btn btn-success me-2">Import dari CSV</a>
+                        <a href="{{ route('barang.exportCsv') . '?' . http_build_query(request()->query()) }}" class="btn btn-primary me-2">Export Sesuai Filter</a>
+                        <a href="{{ route('barang.importCsvForm') }}" class="btn btn-info me-2">Import dari File</a> 
                     </div>
 
                     
