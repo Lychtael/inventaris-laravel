@@ -10,8 +10,12 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware): void {
-        //
+    ->withMiddleware(function (Middleware $middleware) {
+        // ++ TAMBAHKAN INI ++
+        $middleware->alias([
+            'cek.peran' => \App\Http\Middleware\CekPeran::class,
+        ]);
+        // ++ BATAS TAMBAHAN ++
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
